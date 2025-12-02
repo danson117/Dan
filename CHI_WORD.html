@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>中文閃卡 v1.5 (淡雅氣球版)</title>
+    <title>中文閃卡 v2.1 (iPad 專業版)</title>
     <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;900&family=Noto+Serif+HK:wght@500;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -14,15 +14,18 @@
             
             --accent: #ff7043;
             --btn-speak: #42a5f5;
+            --btn-pause: #ffca28;
             --btn-master: #66bb6a;
             --danger: #ef5350;
             
             --card-border: #b2ebf2;
             --font-ui: 'M PLUS Rounded 1c', sans-serif;
             --font-learn: 'Kaiti TC', 'STKaiti', 'BiaoKai', 'Noto Serif HK', serif;
+            
+            --progress-color: #c8e6c9; /* 熟練度背景色 */
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
 
         body {
             font-family: var(--font-ui);
@@ -30,328 +33,276 @@
             color: var(--text-primary);
             height: 100vh;
             overflow: hidden;
-            padding: 10px;
+            padding: 15px;
             display: flex;
             flex-direction: column;
-            position: relative;
         }
 
-        /* --- 背景裝飾層 (Z-Index: 1) --- */
-        .background-layer {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 1; overflow: hidden;
-        }
-
-        .bg-cloud {
-            position: absolute; background: #fff; border-radius: 50%; opacity: 0.6;
-            box-shadow: 0 8px 5px rgba(0,0,0,0.05);
-        }
-        .bg-cloud::after, .bg-cloud::before {
-            content: ''; position: absolute; background: inherit; border-radius: 50%;
-        }
-        .bg-cloud.c1 { width: 100px; height: 40px; top: 10%; left: -120px; animation: drift 60s linear infinite; }
-        .bg-cloud.c1::after { width: 50px; height: 50px; top: -25px; left: 15px; }
-        .bg-cloud.c1::before { width: 40px; height: 40px; top: -15px; left: 50px; }
-        .bg-cloud.c2 { width: 140px; height: 60px; top: 25%; left: -160px; animation: drift 85s linear infinite; animation-delay: -20s; }
-        .bg-cloud.c2::after { width: 70px; height: 70px; top: -35px; left: 20px; }
-        .bg-cloud.c2::before { width: 60px; height: 60px; top: -25px; left: 70px; }
-        .bg-cloud.c3 { width: 80px; height: 30px; top: 5%; left: -100px; animation: drift 100s linear infinite; animation-delay: -40s; }
-        
-        @keyframes drift {
-            from { transform: translateX(0); }
-            to { transform: translateX(120vw); }
-        }
-
-        .ground-decor {
-            position: absolute; bottom: 0; width: 100%; height: 60px;
-            display: flex; justify-content: space-around; align-items: flex-end;
-            opacity: 0.7;
-        }
-        .grass {
-            width: 10px; height: 20px; background: #81c784;
-            border-radius: 10px 10px 0 0; transform-origin: bottom;
-        }
-        .flower {
-            width: 20px; height: 20px; background: #ffeb3b; border-radius: 50%;
-            position: relative; bottom: 15px;
-            box-shadow: 0 0 0 5px #ffab91;
-        }
-        .flower::after {
-            content: ''; position: absolute; top: 20px; left: 9px;
-            width: 2px; height: 20px; background: #66bb6a;
-        }
-
-        /* --- 主介面層 (Z-Index: 10) --- */
+        /* --- 佈局系統 (iPad 優化) --- */
         .main-layout {
-            display: flex; gap: 15px; height: 100%; max-width: 1400px;
-            margin: 0 auto; width: 100%; padding-bottom: 25px;
+            display: flex; gap: 20px; height: 100%; width: 100%;
             position: relative; z-index: 10;
         }
 
+        /* 左側/上方：列表區 */
         .sidebar {
-            flex: 0 0 400px; display: flex; flex-direction: column; gap: 10px;
-            height: 100%; overflow: hidden;
+            flex: 0 0 380px; display: flex; flex-direction: column; gap: 15px;
+            height: 100%; overflow: hidden; transition: all 0.3s;
         }
 
+        /* 右側/下方：學習區 */
+        .learning-area {
+            flex: 1; display: flex; flex-direction: column; align-items: center;
+            justify-content: center; height: 100%; position: relative;
+            background: rgba(255,255,255,0.3); border-radius: 24px; padding: 10px;
+        }
+
+        /* 面板樣式 */
         .panel {
-            background: var(--bg-secondary); padding: 10px; border-radius: 16px;
+            background: var(--bg-secondary); padding: 12px; border-radius: 16px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 2px solid var(--card-border);
             display: flex; flex-direction: column; min-height: 0; position: relative;
         }
         .panel-words { flex: 3; }     
-        .panel-mastered { flex: 2; }  
+        .panel-mastered { flex: 2; border-color: #a5d6a7; background-color: #f1f8e9; }  
 
         .panel-title {
-            font-size: 1rem; color: var(--text-primary); font-weight: 800;
-            margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
+            font-size: 1.1rem; color: var(--text-primary); font-weight: 800;
+            margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
         }
 
+        /* 詞語網格 */
         .word-grid {
-            display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px;
-            overflow-y: auto; padding: 4px; flex: 1; align-content: start;
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+            overflow-y: auto; padding: 2px; align-content: start; flex: 1;
         }
 
+        /* 詞語卡片 */
         .word-tag {
-            background: #f5f5f5; aspect-ratio: 1 / 1; border-radius: 10px;
+            background: #f5f5f5; aspect-ratio: 1 / 1; border-radius: 12px;
             border: 2px solid transparent; cursor: pointer; position: relative;
-            user-select: none; transition: transform 0.1s;
+            transition: transform 0.1s, border-color 0.2s;
             display: flex; align-items: center; justify-content: center;
             text-align: center; font-family: var(--font-learn);
-            color: #333; font-weight: bold; padding: 2px;
+            color: #333; font-weight: bold; padding: 2px; overflow: hidden;
         }
         .word-tag:active { transform: scale(0.95); }
+        
+        /* 當前選中 */
         .word-tag.active { 
-            background: #fff3e0; border-color: var(--accent); color: var(--accent);
-            box-shadow: 0 0 0 2px var(--accent) inset;
+            border-color: var(--accent); 
+            box-shadow: 0 0 0 3px rgba(255, 112, 67, 0.3);
+            z-index: 2;
         }
 
-        .word-tag span { line-height: 1.1; width: 100%; }
-        .len-1 span, .len-2 span { font-size: 1.6rem; }
-        .len-3 span { font-size: 1.2rem; }
-        .len-4 span { font-size: 1.3rem; display: flex; flex-direction: column; justify-content: center; width: 100%; height: 100%; }
+        /* 熟練度背景 (由下而上) */
+        .word-tag-bg {
+            position: absolute; bottom: 0; left: 0; width: 100%; background: var(--progress-color);
+            z-index: 0; transition: height 0.5s ease; opacity: 0.6; pointer-events: none;
+        }
+        
+        /* 詞語文字層 */
+        .word-tag-content { position: relative; z-index: 1; width: 100%; }
+        .word-tag span { line-height: 1.1; width: 100%; display: block; }
+        
+        /* 字體大小適配 */
+        .len-1 span, .len-2 span { font-size: 1.8rem; }
+        .len-3 span { font-size: 1.3rem; }
+        .len-4 span { font-size: 1.4rem; display: flex; flex-direction: column; }
         .len-4 span i { font-style: normal; width: 100%; display: block; line-height: 1.1; }
-        .len-long span { font-size: 0.8rem; word-break: break-all; }
+        .len-long span { font-size: 0.9rem; word-break: break-all; }
 
-        /* 單個刪除按鈕 (X) */
-        .single-delete-btn {
-            position: absolute; top: -4px; right: -4px;
-            width: 18px; height: 18px; background: #eceff1; color: #b0bec5;
-            border-radius: 50%; font-size: 12px; display: flex; align-items: center; justify-content: center;
-            font-family: var(--font-ui); font-weight: bold; border: 1px solid #cfd8dc;
-            z-index: 5; transition: all 0.2s;
-        }
-        .single-delete-btn:hover { background: #ef5350; color: white; border-color: #ef5350; transform: scale(1.1); }
-
-        /* 批量刪除 Checkbox */
-        .del-checkbox {
-            position: absolute; top: 2px; right: 2px;
-            width: 20px; height: 20px; accent-color: var(--danger);
-            cursor: pointer; z-index: 30;
+        /* 左下角次數 (Views) */
+        .view-count {
+            position: absolute; bottom: 2px; left: 4px; font-size: 0.65rem;
+            color: #78909c; font-family: var(--font-ui); font-weight: 700; z-index: 2;
         }
 
-        .add-zone { margin-top: 5px; flex-shrink: 0; }
-        .add-btn {
-            width: 100%; padding: 10px; background: #fff; border: 2px dashed var(--text-secondary);
-            border-radius: 12px; color: var(--text-secondary); font-weight: bold; cursor: pointer; font-size: 0.9rem;
+        /* 新增按鈕 (+) */
+        .add-tag {
+            background: #eceff1; color: #90a4ae; font-size: 2.5rem; border: 2px dashed #cfd8dc;
         }
-        .input-box {
-            width: 100%; padding: 8px; font-size: 1rem; border: 2px solid var(--accent);
-            border-radius: 12px; text-align: center; outline: none;
-        }
-
-        .learning-area {
-            flex: 1; display: flex; flex-direction: column; align-items: center;
-            justify-content: center; height: 100%; position: relative;
+        .add-tag:hover { background: #fff; color: var(--accent); border-color: var(--accent); }
+        
+        /* 格內輸入框 */
+        .grid-input {
+            width: 100%; height: 100%; border: none; background: #fff;
+            text-align: center; font-size: 1.2rem; font-family: var(--font-learn);
+            outline: none; border-radius: 10px; color: var(--text-primary); padding: 0;
         }
 
-        .progress-container {
-            width: 100%; max-width: 500px; margin-bottom: 15px; text-align: center; z-index: 20;
-        }
-        .progress-bar { height: 10px; background: #eceff1; border-radius: 10px; overflow: hidden; }
+        /* 學習卡片區 */
+        .progress-container { width: 100%; max-width: 500px; margin-bottom: 15px; text-align: center; }
+        .progress-bar { height: 8px; background: #eceff1; border-radius: 10px; overflow: hidden; }
         .progress-fill { height: 100%; background: linear-gradient(90deg, #ffca28, #ffa000); transition: width 0.3s; }
         .progress-text { font-size: 0.9rem; font-weight: bold; color: var(--text-secondary); margin-top: 5px; }
 
         .flashcard {
             background: rgba(255, 255, 255, 0.95);
-            width: 100%; max-width: 650px; flex: 1; max-height: 55vh;
+            width: 100%; max-width: 700px; flex: 1; max-height: 50vh;
             border-radius: 24px; border: 4px solid var(--card-border);
             box-shadow: 0 8px 0 rgba(0,0,0,0.05);
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            margin-bottom: 20px; position: relative; transition: transform 0.2s; z-index: 20;
+            margin-bottom: 20px; position: relative; z-index: 20;
         }
         
         .word-display {
-            font-size: 7rem; font-weight: 700; color: var(--text-primary);
+            font-size: 8rem; font-weight: 700; color: var(--text-primary);
             text-align: center; line-height: 1.2; font-family: var(--font-learn);
-            padding: 10px; width: 100%; word-break: break-all; z-index: 25;
+            padding: 10px; width: 100%; word-break: break-all;
         }
 
         .status-badge {
             position: absolute; top: 15px; padding: 6px 16px; border-radius: 20px;
-            font-weight: bold; font-size: 1.1rem; opacity: 0; transition: opacity 0.2s; pointer-events: none;
+            font-weight: bold; font-size: 1.2rem; opacity: 0; transition: opacity 0.2s; pointer-events: none;
         }
         .status-waiting { background: #fff9c4; color: #f9a825; opacity: 1; border: 2px solid #fff59d; }
         .status-reading { background: #e3f2fd; color: #1565c0; opacity: 1; border: 2px solid #bbdefb; }
+        .status-paused { background: #ffe0b2; color: #e65100; opacity: 1; border: 2px solid #ffcc80; }
 
+        /* 控制按鈕 */
         .controls-grid {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
-            width: 100%; max-width: 550px; z-index: 20;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 15px;
+            width: 100%; max-width: 600px; z-index: 20;
         }
 
         .big-btn {
-            border: none; padding: 14px; border-radius: 16px; font-size: 1.1rem;
+            border: none; padding: 16px; border-radius: 18px; font-size: 1.2rem;
             font-weight: 800; cursor: pointer; color: white;
-            display: flex; align-items: center; justify-content: center; gap: 6px;
-            transition: transform 0.1s; position: relative; top: 0;
-            font-family: var(--font-ui); box-shadow: 0 4px 0 rgba(0,0,0,0.15);
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: all 0.1s; position: relative; top: 0;
+            font-family: var(--font-ui); box-shadow: 0 5px 0 rgba(0,0,0,0.15);
         }
-        .big-btn:active { top: 4px; box-shadow: none !important; }
+        .big-btn:active { top: 5px; box-shadow: none !important; }
         .big-btn:disabled { background: #cfd8dc !important; box-shadow: none !important; color: #fff; cursor: not-allowed; top: 0; }
 
-        .btn-speak { background: var(--btn-speak); box-shadow: 0 4px 0 #1e88e5; grid-column: 1 / 2; }
-        .btn-master { background: var(--btn-master); box-shadow: 0 4px 0 #43a047; grid-column: 2 / 3; }
+        .btn-speak { background: var(--btn-speak); box-shadow: 0 5px 0 #1e88e5; grid-column: 1 / 2; }
+        .btn-speak.paused { background: var(--btn-pause); box-shadow: 0 5px 0 #ffb300; }
+        .btn-master { background: var(--btn-master); box-shadow: 0 5px 0 #43a047; grid-column: 2 / 3; }
+        
         .nav-btn {
             background: #fff; color: var(--text-primary); border: 2px solid #cfd8dc;
-            box-shadow: 0 4px 0 #b0bec5; font-size: 1rem; padding: 12px;
+            box-shadow: 0 5px 0 #b0bec5; font-size: 1rem; padding: 12px;
         }
 
+        /* 開關區域 */
         .toggles-area {
-            margin-top: 10px; display: flex; gap: 15px; background: rgba(255,255,255,0.5);
-            padding: 8px 15px; border-radius: 12px; flex-wrap: wrap; justify-content: center; z-index: 20;
+            margin-top: 15px; display: flex; gap: 20px; background: rgba(255,255,255,0.6);
+            padding: 10px 20px; border-radius: 16px; flex-wrap: wrap; justify-content: center;
         }
-        .toggle-item { display: flex; align-items: center; gap: 6px; font-weight: bold; font-size: 0.9rem; cursor: pointer; }
-        .toggle-item input { accent-color: var(--accent); width: 20px; height: 20px; }
+        .toggle-item { display: flex; align-items: center; gap: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; }
+        .toggle-item input { accent-color: var(--accent); width: 22px; height: 22px; }
 
+        /* 底部功能列 */
         .parents-bar {
-            margin-top: auto; display: flex; gap: 8px; justify-content: center; padding-top: 5px; z-index: 20;
+            margin-top: auto; display: flex; gap: 10px; justify-content: center; padding-top: 10px;
         }
         .mini-btn {
-            padding: 8px 12px; font-size: 0.85rem; border-radius: 8px; border: 1px solid #cfd8dc;
+            padding: 10px 16px; font-size: 0.9rem; border-radius: 10px; border: 1px solid #cfd8dc;
             background: #fff; cursor: pointer; font-weight: bold; color: #546e7a;
         }
 
-        /* Modal */
+        /* Modal 優化 */
         .custom-modal {
             display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
-            z-index: 3000; align-items: center; justify-content: center; backdrop-filter: blur(3px);
+            z-index: 3000; align-items: center; justify-content: center; backdrop-filter: blur(4px);
         }
         .modal-content {
-            background: white; width: 90%; max-width: 400px; border-radius: 20px;
-            padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            text-align: center; animation: popIn 0.2s ease-out; display: flex; flex-direction: column;
+            background: white; width: 90%; max-width: 500px; border-radius: 24px;
+            padding: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+            text-align: center; display: flex; flex-direction: column;
         }
-        @keyframes popIn { from {transform: scale(0.8); opacity: 0;} to {transform: scale(1); opacity: 1;} }
         
-        .modal-title { font-size: 1.2rem; font-weight: 900; margin-bottom: 10px; color: var(--text-primary); }
-        .modal-actions { display: flex; gap: 10px; justify-content: center; margin-top: 15px; }
-        .modal-btn { flex: 1; padding: 12px; border-radius: 10px; border: none; font-weight: bold; font-size: 1rem; cursor: pointer; }
-        .btn-yes { background: var(--danger); color: white; }
+        .import-textarea {
+            width: 100%; height: 40vh; /* 加高 */
+            border: 2px solid #cfd8dc; border-radius: 12px;
+            padding: 15px; font-size: 1.1rem; resize: none; font-family: var(--font-ui);
+            margin: 10px 0;
+        }
+        
+        .modal-btn { flex: 1; padding: 10px; border-radius: 10px; border: none; font-weight: bold; font-size: 0.95rem; cursor: pointer; }
         .btn-save { background: var(--accent); color: white; }
         .btn-no { background: #eceff1; color: #455a64; }
 
-        .import-textarea {
-            width: 100%; height: 200px; border: 2px solid #cfd8dc; border-radius: 10px;
-            padding: 10px; font-size: 1rem; resize: none; font-family: var(--font-ui);
+        .setting-row {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 15px; text-align: left; border-bottom: 1px solid #eee; padding-bottom: 10px;
         }
+        .setting-input { width: 70px; padding: 8px; border-radius: 10px; border: 1px solid #cfd8dc; text-align: center; font-size: 1.1rem; }
 
         .toast {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.8); color: white; padding: 15px 25px;
-            border-radius: 30px; font-weight: bold; z-index: 4000; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+            background: rgba(0,0,0,0.85); color: white; padding: 16px 30px;
+            border-radius: 40px; font-weight: bold; font-size: 1.1rem; z-index: 4000; opacity: 0; pointer-events: none; transition: opacity 0.3s;
         }
 
-        .version-tag { position: fixed; bottom: 5px; right: 10px; font-size: 0.7rem; color: #b0bec5; font-weight: bold; pointer-events: none; z-index: 5000; }
-        
-        /* --- 特效層 --- */
-        #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1000; }
-        #effects-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; overflow: hidden; }
-
-        /* 氣球樣式 (v1.5 優化：淡色、慢速) */
-        .balloon {
-            position: absolute; bottom: -120px; width: 40px; height: 50px;
-            border-radius: 50%; opacity: 0.5; /* 半透明 */
-            animation: floatUpSlow 35s linear forwards; /* 極慢速 */
-        }
-        .balloon::after {
-            content: ''; position: absolute; bottom: -10px; left: 50%;
-            width: 2px; height: 10px; background: rgba(0,0,0,0.2); transform: translateX(-50%);
-        }
-        @keyframes floatUpSlow {
-            0% { transform: translateY(0) rotate(0deg); opacity: 0.5; }
-            90% { opacity: 0.5; }
-            100% { transform: translateY(-120vh) rotate(10deg); opacity: 0; }
+        /* 批量刪除模式樣式 */
+        .delete-mode-active .panel-mastered { border-color: var(--danger); box-shadow: 0 0 0 2px var(--danger) inset; }
+        .del-checkbox {
+            position: absolute; top: 4px; right: 4px; width: 24px; height: 24px;
+            accent-color: var(--danger); z-index: 10;
         }
 
-        /* 響應式調整 */
-        @media (max-width: 900px) {
-            .main-layout { flex-direction: column; padding-bottom: 40px; }
-            .sidebar { flex: none; height: 35vh; width: 100%; }
-            .word-grid { grid-template-columns: repeat(4, 1fr); } 
-            .learning-area { height: 60vh; }
-            .flashcard { max-height: 40vh; margin-bottom: 10px; }
+        /* 特效層 */
+        #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2500; }
+        .particle { position: absolute; pointer-events: none; animation: fadeOut 1s forwards; }
+        @keyframes fadeOut { to { opacity: 0; transform: translateY(-20px); } }
+
+        /* --- iPad 直屏適配 (Portrait) --- */
+        @media (orientation: portrait) {
+            .main-layout { flex-direction: column; }
+            .sidebar { flex: none; height: 40vh; width: 100%; }
+            .word-grid { grid-template-columns: repeat(5, 1fr); }
+            .learning-area { height: 60vh; border-radius: 24px 24px 0 0; }
+            .flashcard { max-height: 35vh; }
+            .word-display { font-size: 6rem; }
+        }
+
+        /* --- 手機適配 --- */
+        @media (max-width: 600px) {
+            .word-grid { grid-template-columns: repeat(4, 1fr); }
             .word-display { font-size: 5rem; }
-            .controls-grid { gap: 10px; }
-            .big-btn { padding: 12px; font-size: 1rem; }
-        }
-        @media (orientation: landscape) and (max-height: 600px) {
-             .main-layout { flex-direction: row; }
-             .sidebar { width: 300px; height: 100%; }
-             .learning-area { height: 100%; }
-             .word-display { font-size: 4rem; }
+            .big-btn { font-size: 1rem; padding: 12px; }
         }
     </style>
 </head>
 <body>
 
-    <div class="background-layer">
-        <div class="bg-cloud c1"></div>
-        <div class="bg-cloud c2"></div>
-        <div class="bg-cloud c3"></div>
-        <div class="ground-decor">
-            <div class="grass" style="height:25px; transform: rotate(-5deg);"></div>
-            <div class="flower"></div>
-            <div class="grass" style="height:35px;"></div>
-            <div class="grass" style="height:20px; transform: rotate(5deg);"></div>
-            <div class="flower" style="background:#ff4081; box-shadow:0 0 0 5px #f8bbd0;"></div>
-            <div class="grass" style="height:30px;"></div>
-            <div class="grass" style="height:22px; transform: rotate(-3deg);"></div>
-            <div class="flower" style="background:#42a5f5; box-shadow:0 0 0 5px #bbdefb;"></div>
-            <div class="grass" style="height:28px;"></div>
-        </div>
-    </div>
-
     <canvas id="confetti-canvas"></canvas>
-    <div id="effects-container"></div>
 
     <div class="main-layout">
-        <!-- 左邊：列表 -->
+        <!-- 左/上：列表 -->
         <div class="sidebar">
             <div class="panel panel-words">
                 <div class="panel-title">
                     <span>📖 詞語表 <small id="wordCount">(0)</small></span>
                 </div>
-                <div class="word-grid" id="wordList"></div>
-                <div class="add-zone" id="addWordContainer">
-                    <button class="add-btn" onclick="showNewWordInput()">➕ 加新詞語</button>
+                <div class="word-grid" id="wordList">
+                    <!-- JS 會在這裡插入 "+" 按鈕和詞語 -->
                 </div>
             </div>
 
-            <div class="panel panel-mastered" style="border-color: #a5d6a7; background-color: #f1f8e9;">
+            <div class="panel panel-mastered" id="masteredPanel">
                 <div class="panel-title">
-                    <span>🏆 叻叻榜 <small id="masteredCount">(0)</small></span>
+                    <span>🏆 已學識 <small id="masteredCount">(0)</small></span>
+                    <div id="deleteControls" style="display:none; gap:8px;">
+                        <button class="mini-btn" onclick="toggleSelectAll()">全選</button>
+                        <button class="mini-btn" style="color:white; background:var(--danger); border:none;" onclick="confirmBatchDelete()">刪除</button>
+                        <button class="mini-btn" onclick="exitDeleteMode()">取消</button>
+                    </div>
                 </div>
                 <div class="word-grid" id="masteredList"></div>
+                <div style="text-align:center; font-size:0.75rem; color:#90a4ae; margin-top:5px;">(長按詞語可刪除)</div>
             </div>
 
             <div class="parents-bar">
-                <button class="mini-btn" onclick="openEditModal()">📝 編輯 / 導入</button>
+                <button class="mini-btn" onclick="openEditModal()">📝 編輯</button>
                 <button class="mini-btn" onclick="exportData()">📤 導出</button>
-                <button class="mini-btn" id="clearBtn" onclick="handleClearButton()" style="color:#d32f2f;">🗑️ 清除</button>
-                <button class="mini-btn" id="cancelClearBtn" onclick="cancelDeleteMode()" style="display:none; color:#78909c;">❌ 取消</button>
+                <button class="mini-btn" onclick="openSettingsModal()">⚙️ 設定</button>
             </div>
         </div>
 
-        <!-- 右邊：學習 -->
+        <!-- 右/下：學習 -->
         <div class="learning-area">
             <div class="progress-container">
                 <div class="progress-bar"><div id="progressFill" class="progress-fill" style="width: 0%"></div></div>
@@ -364,11 +315,11 @@
             </div>
 
             <div class="controls-grid">
-                <button class="big-btn btn-speak" id="speakBtn" onclick="manualSpeak()">
+                <button class="big-btn btn-speak" id="speakBtn" onclick="toggleSpeak()">
                     🔊 朗讀
                 </button>
-                <button class="big-btn btn-master" id="masteredBtn" onclick="markAsMastered()">
-                    ✅ 我識咗啦！
+                <button class="big-btn btn-master" id="masteredBtn" onclick="handleMasteryClick(event)">
+                    ✅ 我識咗喇！
                 </button>
                 
                 <button class="big-btn nav-btn" id="prevBtn" onclick="previousWord()">👈 上一個</button>
@@ -386,61 +337,89 @@
                 </label>
                 <label class="toggle-item">
                     <input type="checkbox" id="randomOrder">
-                    🔀 隨機
+                    🔀 洗牌模式
                 </label>
             </div>
         </div>
     </div>
 
-    <div class="version-tag">v1.5</div>
     <div id="toast" class="toast">提示訊息</div>
 
-    <!-- 單個刪除確認視窗 -->
-    <div id="deleteModal" class="custom-modal">
-        <div class="modal-content">
-            <div class="modal-title">⚠️ 刪除確認</div>
-            <p id="deleteMsg" style="font-size:1.1rem; margin-bottom:15px; color:#333;">確定要刪除這個詞語嗎？</p>
-            <div class="modal-actions">
-                <button class="modal-btn btn-yes" id="confirmDeleteBtn">確認刪除 (Enter)</button>
-                <button class="modal-btn btn-no" onclick="closeModal('deleteModal')">取消 (Esc)</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 編輯/導入視窗 -->
+    <!-- 編輯視窗 -->
     <div id="importModal" class="custom-modal">
         <div class="modal-content">
             <div class="modal-title">📝 編輯所有詞語</div>
-            <p style="font-size:0.85rem; color:#666; margin-bottom:8px;">在這裡直接修改、刪除或貼上新詞語。<br><b>按下保存後，列表會變成這裡的內容。</b></p>
+            <p style="font-size:0.9rem; color:#666;">直接修改或貼上新詞語。<br><small>注意：保存後會重置學習次數。</small></p>
             <textarea id="importTextarea" class="import-textarea"></textarea>
             <div class="modal-actions">
-                <button class="modal-btn btn-save" onclick="saveEdit()">💾 保存修改</button>
+                <button class="modal-btn btn-save" onclick="saveEdit()">💾 保存</button>
                 <button class="modal-btn btn-no" onclick="closeModal('importModal')">取消</button>
             </div>
         </div>
     </div>
 
+    <!-- 設定視窗 -->
+    <div id="settingsModal" class="custom-modal">
+        <div class="modal-content">
+            <div class="modal-title">⚙️ 設定</div>
+            
+            <div class="setting-row">
+                <div class="setting-label">自動模式倒數 (秒)</div>
+                <input type="number" id="settingAutoDelay" class="setting-input" value="4" min="1" max="10">
+            </div>
+            
+            <div class="setting-row">
+                <div class="setting-label">重複朗讀間隔 (秒)</div>
+                <input type="number" id="settingRepeatDelay" class="setting-input" value="2" min="1" max="5">
+            </div>
+
+            <div class="setting-row">
+                <div class="setting-label">「我識咗喇」門檻 (次)</div>
+                <input type="number" id="settingMasteryThreshold" class="setting-input" value="1" min="1" max="20">
+            </div>
+
+            <div class="modal-actions">
+                <button class="modal-btn btn-save" onclick="saveSettings()">💾 確定</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        let words = [
-            "都是", "條", "這個", "那個", "合成", "其餘", "共有", 
-            "相差", "拿走", "合共", "結果", "相同", "算式", "想",
-            "開門見山"
-        ];
-        let masteredWords = [
-            "和", "高", "喝了", "最", "減", "還餘", "取去", "矮", 
-            "粒", "等於", "加", "遠", "近", "還有", "吃了", "分成"
-        ];
+        // 數據結構
+        let words = [];
+        let masteredWords = [];
         
+        // 初始數據
+        const initialWords = ["都是", "條", "這個", "那個", "合成", "其餘", "共有"];
+        const initialMastered = ["和", "高", "喝了"];
+
         let currentIndex = 0;
         let cantoneseVoice = null;
-        let countdownTimer = null;
-        let nextTimer = null;
-        let repeatTimer = null;
-        let repeatCount = 0;
-        let isDeleteMode = false; // 批量刪除模式
-        let pendingDelete = null; // 待刪除的單個項目
         
+        // --- 狀態管理 (精準暫停) ---
+        let state = {
+            status: 'idle', // idle, countdown, speaking, paused
+            timerId: null,
+            countdownRemaining: 0,
+            countdownCallback: null, // 暫停後恢復要執行的函數
+            countdownLabel: '',
+            repeatCount: 0 // 當前讀了幾次
+        };
+        
+        let shuffleDeck = [];
+        let deleteMode = false;
+        
+        let settings = {
+            autoDelay: 4,
+            repeatDelay: 2,
+            masteryThreshold: 1
+        };
+
         function init() {
+            // 初始化數據
+            words = initialWords.map(w => ({ text: w, views: 0, hits: 0 }));
+            masteredWords = initialMastered.map(w => ({ text: w, views: 0, hits: 0 }));
+            
             renderLists();
             updateCard();
             
@@ -450,21 +429,12 @@
             }
 
             document.getElementById('autoPlayNext').addEventListener('change', (e) => {
-                if (!e.target.checked) stopAllTimers();
-                else if (words.length > 0) startAutoSequence();
+                if (!e.target.checked) stopEverything();
+                else if (words.length > 0) startSequence();
             });
-
-            // 鍵盤監聽：處理刪除確認
-            document.addEventListener('keydown', (e) => {
-                const delModal = document.getElementById('deleteModal');
-                if (delModal.style.display === 'flex') {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        if (pendingDelete) executeSingleDelete();
-                    } else if (e.key === 'Escape') {
-                        closeModal('deleteModal');
-                    }
-                }
+            
+            document.getElementById('randomOrder').addEventListener('change', () => {
+                shuffleDeck = [];
             });
         }
 
@@ -474,55 +444,213 @@
                              voices.find(v => v.lang === 'zh-HK');
         }
 
-        function stopAllTimers() {
-            clearInterval(countdownTimer);
-            clearTimeout(nextTimer);
-            clearTimeout(repeatTimer);
+        // --- 核心邏輯：流程控制 ---
+
+        function stopEverything() {
+            clearTimeout(state.timerId);
+            clearInterval(state.timerId);
             window.speechSynthesis.cancel();
-            updateStatus('idle');
+            state.status = 'idle';
+            state.repeatCount = 0;
+            updateStatusUI();
         }
 
-        function updateStatus(state, textOverride) {
-            const badge = document.getElementById('statusBadge');
-            badge.style.opacity = '0';
-            badge.className = 'status-badge'; 
+        function toggleSpeak() {
+            if (words.length === 0) return;
+
+            if (state.status === 'paused') {
+                // 繼續
+                resumeFlow();
+            } else if (state.status === 'countdown' || state.status === 'speaking') {
+                // 暫停
+                pauseFlow();
+            } else {
+                // 開始
+                if (document.getElementById('autoPlayNext').checked) {
+                    startSequence();
+                } else {
+                    // 手動模式，直接讀
+                    speakWordFlow();
+                }
+            }
+        }
+
+        function pauseFlow() {
+            clearInterval(state.timerId);
+            clearTimeout(state.timerId);
+            window.speechSynthesis.cancel();
+            state.status = 'paused';
+            updateStatusUI();
+        }
+
+        function resumeFlow() {
+            if (state.countdownCallback) {
+                // 如果是在倒數中暫停，恢復倒數
+                state.status = 'countdown';
+                runCountdown(state.countdownRemaining, state.countdownLabel, state.countdownCallback);
+            } else {
+                // 如果是在朗讀中暫停，直接重新讀這一次
+                speakWordFlow(); 
+            }
+            updateStatusUI();
+        }
+
+        function startSequence() {
+            stopEverything();
+            state.repeatCount = 0;
+            // 開始主倒數
+            runCountdown(settings.autoDelay, "試下自己讀", () => {
+                speakWordFlow();
+            });
+        }
+
+        function runCountdown(seconds, text, callback) {
+            state.status = 'countdown';
+            state.countdownRemaining = seconds;
+            state.countdownLabel = text;
+            state.countdownCallback = callback;
             
-            if (state === 'waiting') {
-                badge.textContent = textOverride || '🤫 試下自己讀';
+            updateStatusUI(); // 顯示初始秒數
+
+            state.timerId = setInterval(() => {
+                state.countdownRemaining--;
+                if (state.countdownRemaining > 0) {
+                    updateStatusUI();
+                } else {
+                    clearInterval(state.timerId);
+                    state.countdownCallback = null; // 清除 callback
+                    callback();
+                }
+            }, 1000);
+        }
+
+        function speakWordFlow() {
+            if (words.length === 0) return;
+            
+            state.status = 'speaking';
+            state.countdownCallback = null; // 朗讀中沒有倒數回調
+            updateStatusUI();
+
+            // 增加 Views (只在第一次讀時計數，重複讀不計)
+            if (state.repeatCount === 0) {
+                words[currentIndex].views++;
+                renderLists(); 
+            }
+
+            const u = new SpeechSynthesisUtterance(words[currentIndex].text);
+            u.lang = 'zh-HK';
+            if (cantoneseVoice) u.voice = cantoneseVoice;
+            u.rate = 0.8;
+
+            u.onend = () => {
+                if (state.status === 'paused') return;
+
+                const repeatThree = document.getElementById('repeatThreeTimes').checked;
+                
+                // 檢查是否需要重複 (0, 1, 2 共三次)
+                if (repeatThree && state.repeatCount < 2) {
+                    state.repeatCount++;
+                    // 進入重複倒數
+                    runCountdown(settings.repeatDelay, "準備再讀", () => {
+                        speakWordFlow();
+                    });
+                } else {
+                    // 完成所有朗讀
+                    state.status = 'idle';
+                    state.repeatCount = 0;
+                    updateStatusUI();
+                    
+                    if (document.getElementById('autoPlayNext').checked) {
+                        state.timerId = setTimeout(nextWord, 1000);
+                    }
+                }
+            };
+            
+            window.speechSynthesis.speak(u);
+        }
+
+        function updateStatusUI() {
+            const badge = document.getElementById('statusBadge');
+            const btn = document.getElementById('speakBtn');
+            
+            badge.className = 'status-badge';
+            badge.style.opacity = '0';
+            
+            // 按鈕文字
+            if (state.status === 'paused') {
+                btn.innerHTML = "▶️ 繼續";
+                btn.classList.add('paused');
+                
+                badge.textContent = `⏸ 已暫停`;
+                badge.classList.add('status-paused');
+                badge.style.opacity = '1';
+            } else if (state.status === 'countdown') {
+                btn.innerHTML = "⏸ 暫停";
+                btn.classList.add('paused');
+                
+                badge.textContent = `${state.countdownLabel} (${state.countdownRemaining})`;
                 badge.classList.add('status-waiting');
                 badge.style.opacity = '1';
-            } else if (state === 'reading') {
+            } else if (state.status === 'speaking') {
+                btn.innerHTML = "⏸ 暫停";
+                btn.classList.add('paused');
+                
                 badge.textContent = '🔊 聽下讀音';
                 badge.classList.add('status-reading');
                 badge.style.opacity = '1';
+            } else {
+                btn.innerHTML = "🔊 朗讀";
+                btn.classList.remove('paused');
             }
         }
 
         // --- 列表渲染 ---
         function renderLists() {
             const wordList = document.getElementById('wordList');
-            const masteredList = document.getElementById('masteredList');
+            const mList = document.getElementById('masteredList');
             
             document.getElementById('wordCount').textContent = `(${words.length})`;
             document.getElementById('masteredCount').textContent = `(${masteredWords.length})`;
 
             wordList.innerHTML = '';
-            words.forEach((word, index) => {
-                const tag = createTag(word, index, false, isDeleteMode ? false : null);
-                if (index === currentIndex && !isDeleteMode) tag.classList.add('active');
+
+            // 1. 插入「+」按鈕 (Req: 第一格)
+            const addBtn = document.createElement('div');
+            addBtn.className = 'word-tag add-tag';
+            addBtn.innerHTML = '<span>+</span>';
+            addBtn.onclick = () => convertToAddInput(addBtn);
+            wordList.appendChild(addBtn);
+
+            // 2. 插入詞語
+            words.forEach((item, index) => {
+                const tag = createTag(item, index, false);
+                if (index === currentIndex) tag.classList.add('active');
                 wordList.appendChild(tag);
             });
 
-            masteredList.innerHTML = '';
-            masteredWords.forEach((word, index) => {
-                const tag = createTag(word, index, true, isDeleteMode ? true : null);
-                masteredList.appendChild(tag);
+            // 3. 插入已學識
+            mList.innerHTML = '';
+            masteredWords.forEach((item, index) => {
+                const tag = createTag(item, index, true);
+                mList.appendChild(tag);
             });
         }
 
-        function createTag(word, index, isMastered, deleteCheckedState) {
+        function createTag(item, index, isMastered) {
             const div = document.createElement('div');
             div.className = 'word-tag';
+            const word = item.text;
+            
+            // 熟練度背景 (Req: 綠色填滿)
+            const pct = Math.min(100, (item.hits / settings.masteryThreshold) * 100);
+            const bg = document.createElement('div');
+            bg.className = 'word-tag-bg';
+            bg.style.height = `${pct}%`;
+            div.appendChild(bg);
+
+            // 內容
+            const content = document.createElement('div');
+            content.className = 'word-tag-content';
             
             const len = word.length;
             if (len <= 2) div.classList.add('len-2');
@@ -530,169 +658,158 @@
             else if (len === 4) div.classList.add('len-4');
             else div.classList.add('len-long');
 
-            let htmlContent = '';
-            if (len === 4) {
-                htmlContent = `<span><i>${word.substring(0,2)}</i><i>${word.substring(2,4)}</i></span>`;
-            } else {
-                htmlContent = `<span>${word}</span>`;
-            }
-            div.innerHTML = htmlContent;
+            content.innerHTML = len === 4 
+                ? `<span><i>${word.substring(0,2)}</i><i>${word.substring(2,4)}</i></span>`
+                : `<span>${word}</span>`;
+            
+            div.appendChild(content);
 
-            // 批量刪除模式：顯示 Checkbox
-            if (deleteCheckedState !== null) {
+            // Views 計數 (Req: 左下角)
+            const viewCount = document.createElement('div');
+            viewCount.className = 'view-count';
+            viewCount.textContent = item.views;
+            div.appendChild(viewCount);
+
+            if (isMastered) {
+                handleMasteredInteraction(div, index, word);
+            } else {
+                handleWordListInteraction(div, index, item);
+            }
+            return div;
+        }
+
+        // --- 交互邏輯 ---
+
+        function convertToAddInput(element) {
+            element.innerHTML = '';
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'grid-input';
+            input.placeholder = '輸入';
+            
+            // 自動聚焦
+            element.appendChild(input);
+            input.focus();
+
+            const save = () => {
+                const val = input.value.trim();
+                if (val) {
+                    words.unshift({ text: val, views: 0, hits: 0 });
+                    currentIndex = 0;
+                    renderLists();
+                    updateCard();
+                } else {
+                    renderLists(); // 還原
+                }
+            };
+
+            input.addEventListener('blur', save);
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    input.blur(); // 觸發 save
+                }
+            });
+        }
+
+        function handleWordListInteraction(div, index, item) {
+            // 點擊：切換
+            div.onclick = () => {
+                if (state.status === 'idle' || state.status === 'paused') {
+                    currentIndex = index;
+                    updateCard();
+                }
+            };
+
+            // 長按：移至已學識 (Req: 新功能)
+            let pressTimer;
+            const startPress = () => {
+                pressTimer = setTimeout(() => {
+                    // 直接移動
+                    masteredWords.push(item);
+                    words.splice(index, 1);
+                    if (currentIndex >= words.length) currentIndex = 0;
+                    
+                    triggerSmallPop(div.getBoundingClientRect());
+                    showToast(`已將「${item.text}」移至已學識`);
+                    renderLists();
+                    updateCard();
+                }, 800);
+            };
+            const cancelPress = () => clearTimeout(pressTimer);
+
+            div.addEventListener('touchstart', startPress);
+            div.addEventListener('touchend', cancelPress);
+            div.addEventListener('mousedown', startPress);
+            div.addEventListener('mouseup', cancelPress);
+        }
+
+        function handleMasteredInteraction(div, index, word) {
+            if (deleteMode) {
                 const checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
                 checkbox.className = 'del-checkbox';
-                checkbox.checked = deleteCheckedState;
-                checkbox.dataset.list = isMastered ? 'mastered' : 'words';
                 checkbox.dataset.index = index;
+                div.appendChild(checkbox);
                 div.onclick = (e) => {
                     if(e.target !== checkbox) checkbox.checked = !checkbox.checked;
                 };
-                div.appendChild(checkbox);
-                div.style.cursor = 'default';
-                return div;
-            }
-
-            // 正常模式：顯示單個刪除按鈕 (X) - 恢復此功能
-            const delBtn = document.createElement('div');
-            delBtn.className = 'single-delete-btn';
-            delBtn.textContent = '×';
-            delBtn.onclick = (e) => {
-                e.stopPropagation();
-                confirmSingleDelete(index, isMastered, word);
-            };
-            div.appendChild(delBtn);
-
-            if (!isMastered) {
-                div.onclick = () => {
-                    currentIndex = index;
-                    updateCard();
-                };
-                div.ondblclick = (e) => {
-                    e.stopPropagation();
-                    moveToMastered(index);
-                };
             } else {
+                // 長按進入刪除模式
+                let pressTimer;
+                const startPress = () => { pressTimer = setTimeout(enterDeleteMode, 800); };
+                const cancelPress = () => clearTimeout(pressTimer);
+                
+                div.addEventListener('touchstart', startPress);
+                div.addEventListener('touchend', cancelPress);
+                div.addEventListener('mousedown', startPress);
+                div.addEventListener('mouseup', cancelPress);
+
+                // 雙擊還原
                 div.ondblclick = () => {
                     masteredWords.splice(index, 1);
-                    words.push(word);
+                    words.unshift({ text: word, views: 0, hits: 0 });
+                    currentIndex = 0;
                     renderLists();
                     updateCard();
                 };
             }
-
-            return div;
         }
 
-        // --- 單個刪除邏輯 ---
-        function confirmSingleDelete(index, isMastered, word) {
-            pendingDelete = { index, isMastered };
-            document.getElementById('deleteMsg').textContent = `確定要刪除「${word}」嗎？`;
-            document.getElementById('confirmDeleteBtn').onclick = executeSingleDelete;
-            document.getElementById('deleteModal').style.display = 'flex';
-        }
-
-        function executeSingleDelete() {
-            if (!pendingDelete) return;
-            
-            if (pendingDelete.isMastered) {
-                masteredWords.splice(pendingDelete.index, 1);
-            } else {
-                words.splice(pendingDelete.index, 1);
-                if (currentIndex >= words.length) currentIndex = Math.max(0, words.length - 1);
-            }
-            
-            closeModal('deleteModal');
+        // --- 刪除模式 ---
+        function enterDeleteMode() {
+            deleteMode = true;
+            document.body.classList.add('delete-mode-active');
+            document.getElementById('deleteControls').style.display = 'flex';
             renderLists();
-            updateCard();
-            pendingDelete = null;
+            showToast("已進入刪除模式");
         }
 
-        // --- 批量刪除邏輯 ---
-        function handleClearButton() {
-            const btn = document.getElementById('clearBtn');
-            const cancelBtn = document.getElementById('cancelClearBtn');
-
-            if (!isDeleteMode) {
-                isDeleteMode = true;
-                btn.textContent = "✅ 確認刪除";
-                btn.style.background = "#ef5350";
-                btn.style.color = "white";
-                cancelBtn.style.display = "inline-block";
-                renderLists();
-                showToast("請選擇要刪除的詞語");
-            } else {
-                executeBatchDelete();
-            }
-        }
-
-        function cancelDeleteMode() {
-            isDeleteMode = false;
-            const btn = document.getElementById('clearBtn');
-            const cancelBtn = document.getElementById('cancelClearBtn');
-            btn.textContent = "🗑️ 清除";
-            btn.style.background = "#fff";
-            btn.style.color = "#d32f2f";
-            cancelBtn.style.display = "none";
+        function exitDeleteMode() {
+            deleteMode = false;
+            document.body.classList.remove('delete-mode-active');
+            document.getElementById('deleteControls').style.display = 'none';
             renderLists();
         }
 
-        function executeBatchDelete() {
+        function toggleSelectAll() {
+            const checkboxes = document.querySelectorAll('.del-checkbox');
+            const allChecked = Array.from(checkboxes).every(c => c.checked);
+            checkboxes.forEach(c => c.checked = !allChecked);
+        }
+
+        function confirmBatchDelete() {
             const checkboxes = document.querySelectorAll('.del-checkbox:checked');
-            if (checkboxes.length === 0) {
-                showToast("沒有選擇任何詞語");
-                cancelDeleteMode();
-                return;
-            }
-            let wordsToDelete = [];
-            let masteredToDelete = [];
-            checkboxes.forEach(cb => {
-                const idx = parseInt(cb.dataset.index);
-                if (cb.dataset.list === 'words') wordsToDelete.push(idx);
-                else masteredToDelete.push(idx);
-            });
-            wordsToDelete.sort((a, b) => b - a);
-            masteredToDelete.sort((a, b) => b - a);
-            wordsToDelete.forEach(idx => words.splice(idx, 1));
-            masteredToDelete.forEach(idx => masteredWords.splice(idx, 1));
-            if (currentIndex >= words.length) currentIndex = Math.max(0, words.length - 1);
-            showToast(`已刪除 ${checkboxes.length} 個詞語`);
-            cancelDeleteMode();
-            updateCard();
+            if (checkboxes.length === 0) return;
+            
+            const indices = Array.from(checkboxes).map(c => parseInt(c.dataset.index)).sort((a,b) => b-a);
+            indices.forEach(idx => masteredWords.splice(idx, 1));
+            
+            showToast(`已刪除 ${indices.length} 個詞語`);
+            exitDeleteMode();
         }
 
-        // --- 核心邏輯 ---
-        function moveToMastered(indexToMove) {
-            const word = words[indexToMove];
-            masteredWords.push(word);
-            words.splice(indexToMove, 1);
-            
-            if (words.length === 0) currentIndex = 0;
-            else if (indexToMove < currentIndex) currentIndex--; 
-            else if (currentIndex >= words.length) currentIndex = 0;
-
-            triggerGrandFireworks(); // 修復後的煙花
-            spawnBalloonStream();    // 優化後的氣球
-            
-            if (words.length === 0) {
-                playCompletionSound();
-                showToast("🎉 太勁啦！全部讀曬啦！");
-            } else {
-                playSuccessSound();
-            }
-            
-            renderLists();
-            updateCard();
-        }
-
-        function markAsMastered() {
-            if (words.length === 0) return;
-            moveToMastered(currentIndex);
-        }
-
+        // --- 導航與學習 ---
         function updateCard() {
-            stopAllTimers();
             const display = document.getElementById('currentWord');
             const progressFill = document.getElementById('progressFill');
             const progressText = document.getElementById('progressText');
@@ -711,140 +828,95 @@
             document.getElementById('speakBtn').disabled = false;
             document.getElementById('masteredBtn').disabled = false;
 
-            const word = words[currentIndex];
-            display.textContent = word;
-            if (word.length > 3) display.style.fontSize = "5rem";
-            else display.style.fontSize = "7rem";
+            const item = words[currentIndex];
+            display.textContent = item.text;
+            display.style.fontSize = item.text.length > 3 ? "5rem" : "8rem";
 
             const pct = ((currentIndex + 1) / words.length) * 100;
             progressFill.style.width = `${pct}%`;
             progressText.textContent = `${currentIndex + 1} / ${words.length}`;
 
             renderLists();
-
-            if (document.getElementById('autoPlayNext').checked) {
-                startAutoSequence();
-            }
-        }
-
-        function startAutoSequence() {
-            stopAllTimers();
-            let timeLeft = 4;
-            updateStatus('waiting', `試下自己讀 (${timeLeft})`);
-            countdownTimer = setInterval(() => {
-                timeLeft--;
-                if (timeLeft > 0) {
-                    updateStatus('waiting', `試下自己讀 (${timeLeft})`);
-                } else {
-                    clearInterval(countdownTimer);
-                    speakWord(false, true);
-                }
-            }, 1000);
-        }
-
-        function manualSpeak() {
-            stopAllTimers();
-            speakWord(false, false);
-        }
-
-        function speakWord(isRepeat = false, isAutoSequence = false) {
-            if (words.length === 0) return;
-            updateStatus('reading');
-            if (!isRepeat) repeatCount = 0;
-            window.speechSynthesis.cancel();
-            const u = new SpeechSynthesisUtterance(words[currentIndex]);
-            u.lang = 'zh-HK';
-            if (cantoneseVoice) u.voice = cantoneseVoice;
-            u.rate = 0.8;
-            
-            const btn = document.getElementById('speakBtn');
-            const repeatThreeTimes = document.getElementById('repeatThreeTimes').checked;
-
-            u.onstart = () => {
-                btn.style.transform = "scale(0.95)";
-                setTimeout(() => btn.style.transform = "scale(1)", 150);
-            };
-
-            u.onend = () => {
-                repeatCount++;
-                if (repeatThreeTimes && repeatCount < 3) {
-                    repeatTimer = setTimeout(() => {
-                        speakWord(true, isAutoSequence);
-                    }, 2000);
-                } else {
-                    updateStatus('idle');
-                    if (isAutoSequence && document.getElementById('autoPlayNext').checked) {
-                        nextTimer = setTimeout(() => {
-                            nextWord();
-                        }, 1000);
-                    }
-                }
-            };
-            window.speechSynthesis.speak(u);
         }
 
         function nextWord() {
             if (words.length === 0) return;
+            stopEverything();
+
             if (document.getElementById('randomOrder').checked) {
-                let newIndex;
-                do { newIndex = Math.floor(Math.random() * words.length); } 
-                while (newIndex === currentIndex && words.length > 1);
-                currentIndex = newIndex;
+                if (shuffleDeck.length === 0) {
+                    shuffleDeck = words.map((_, i) => i).filter(i => i !== currentIndex);
+                    if (shuffleDeck.length === 0 && words.length > 0) shuffleDeck = [0];
+                    for (let i = shuffleDeck.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [shuffleDeck[i], shuffleDeck[j]] = [shuffleDeck[j], shuffleDeck[i]];
+                    }
+                }
+                currentIndex = shuffleDeck.pop();
             } else {
                 currentIndex = (currentIndex + 1) % words.length;
             }
             updateCard();
+            
+            if (document.getElementById('autoPlayNext').checked) {
+                startSequence();
+            }
         }
 
         function previousWord() {
             if (words.length === 0) return;
+            stopEverything();
             currentIndex = (currentIndex - 1 + words.length) % words.length;
             updateCard();
         }
 
-        function showNewWordInput() {
-            const container = document.getElementById('addWordContainer');
-            container.innerHTML = `<input type="text" class="input-box" id="newWordInput" placeholder="輸入後按 Enter" onblur="closeInput()" onkeydown="handleInputKey(event)">`;
-            setTimeout(() => document.getElementById('newWordInput').focus(), 50);
-        }
+        function handleMasteryClick(e) {
+            if (words.length === 0) return;
+            
+            const item = words[currentIndex];
+            item.hits++;
+            
+            // Req: 小特效 (星星)
+            triggerSmallPop(e.target.getBoundingClientRect());
 
-        function handleInputKey(e) {
-            if (e.key === 'Enter') {
-                const val = e.target.value.trim();
-                if (val) {
-                    words.push(val);
-                    renderLists();
-                    updateCard();
-                }
-                e.target.value = '';
+            if (item.hits >= settings.masteryThreshold) {
+                // 真正學識
+                masteredWords.push(item);
+                words.splice(currentIndex, 1);
+                
+                if (words.length === 0) currentIndex = 0;
+                else if (currentIndex >= words.length) currentIndex = 0;
+
+                // Req: 大特效 (紙碎)
+                triggerConfetti();
+                showToast(`🎉 太棒了！學識咗「${item.text}」`);
+                
+                renderLists();
+                updateCard();
+            } else {
+                renderLists(); // 更新背景進度
             }
         }
 
-        function closeInput() {
-            setTimeout(() => {
-                document.getElementById('addWordContainer').innerHTML = `<button class="add-btn" onclick="showNewWordInput()">➕ 加新詞語</button>`;
-            }, 200);
+        // --- 設置與導入 ---
+        function openSettingsModal() {
+            document.getElementById('settingAutoDelay').value = settings.autoDelay;
+            document.getElementById('settingRepeatDelay').value = settings.repeatDelay;
+            document.getElementById('settingMasteryThreshold').value = settings.masteryThreshold;
+            document.getElementById('settingsModal').style.display = 'flex';
         }
 
-        function showToast(msg) {
-            const t = document.getElementById('toast');
-            t.textContent = msg;
-            t.style.opacity = 1;
-            setTimeout(() => t.style.opacity = 0, 3000);
-        }
-
-        function closeModal(id) {
-            document.getElementById(id).style.display = 'none';
-            pendingDelete = null; // 清除待刪除狀態
-        }
-
-        function exportData() {
-            const text = `【詞語表】\n${words.join('\n')}\n\n【叻叻榜】\n${masteredWords.join('\n')}`;
-            navigator.clipboard.writeText(text).then(() => showToast("已複製！")).catch(() => showToast("複製失敗"));
+        function saveSettings() {
+            settings.autoDelay = parseInt(document.getElementById('settingAutoDelay').value) || 4;
+            settings.repeatDelay = parseInt(document.getElementById('settingRepeatDelay').value) || 2;
+            settings.masteryThreshold = parseInt(document.getElementById('settingMasteryThreshold').value) || 1;
+            closeModal('settingsModal');
+            showToast("設定已保存");
+            renderLists(); // 更新閾值相關的背景
         }
 
         function openEditModal() {
-            const text = `【詞語表】\n${words.join('\n')}\n\n【叻叻榜】\n${masteredWords.join('\n')}`;
+            const text = `【詞語表】\n${words.map(w=>w.text).join('\n')}\n\n【已學識】\n${masteredWords.map(w=>w.text).join('\n')}`;
             document.getElementById('importTextarea').value = text;
             document.getElementById('importModal').style.display = 'flex';
         }
@@ -852,130 +924,94 @@
         function saveEdit() {
             const raw = document.getElementById('importTextarea').value;
             if (!raw.trim()) { closeModal('importModal'); return; }
-            const parts = raw.split('【叻叻榜】');
+            const parts = raw.split('【已學識】');
             const part1 = parts[0].replace('【詞語表】', '');
             const part2 = parts[1] || '';
             const parseLines = (txt) => txt.split(/[\n,]+/).map(w => w.trim()).filter(w => w);
-            words = [...new Set(parseLines(part1))];
-            masteredWords = [...new Set(parseLines(part2))];
+            
+            words = [...new Set(parseLines(part1))].map(w => ({ text: w, views: 0, hits: 0 }));
+            masteredWords = [...new Set(parseLines(part2))].map(w => ({ text: w, views: 0, hits: 0 }));
+            
             currentIndex = 0;
             renderLists();
             updateCard();
             closeModal('importModal');
-            showToast("已保存修改！");
+            showToast("已更新列表");
         }
 
-        // --- 聲效與特效 ---
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        
-        function playSuccessSound() {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const o = audioCtx.createOscillator();
-            const g = audioCtx.createGain();
-            o.connect(g); g.connect(audioCtx.destination);
-            o.type = 'sine';
-            o.frequency.setValueAtTime(523.25, audioCtx.currentTime);
-            o.frequency.exponentialRampToValueAtTime(1046.5, audioCtx.currentTime + 0.1);
-            g.gain.setValueAtTime(0.3, audioCtx.currentTime);
-            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-            o.start(); o.stop(audioCtx.currentTime + 0.5);
+        function exportData() {
+            const text = `【詞語表】\n${words.map(w=>w.text).join('\n')}\n\n【已學識】\n${masteredWords.map(w=>w.text).join('\n')}`;
+            navigator.clipboard.writeText(text).then(() => showToast("已複製！")).catch(() => showToast("複製失敗"));
         }
 
-        function playCompletionSound() {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const now = audioCtx.currentTime;
-            const notes = [523.25, 659.25, 783.99, 1046.50];
-            notes.forEach((freq, i) => {
-                const o = audioCtx.createOscillator();
-                const g = audioCtx.createGain();
-                o.connect(g); g.connect(audioCtx.destination);
-                o.type = 'triangle';
-                o.frequency.value = freq;
-                g.gain.setValueAtTime(0.2, now + i * 0.15);
-                g.gain.exponentialRampToValueAtTime(0.01, now + i * 0.15 + 0.4);
-                o.start(now + i * 0.15);
-                o.stop(now + i * 0.15 + 0.4);
-            });
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.style.opacity = 1;
+            setTimeout(() => t.style.opacity = 0, 2500);
         }
 
-        // 氣球流 (v1.5: 數量減半，時間延長，顏色變淡)
-        function spawnBalloonStream() {
-            const container = document.getElementById('effects-container');
-            // 淡色系 (Pastel)
-            const colors = ['#ffcdd2', '#bbdefb', '#c8e6c9', '#fff9c4', '#e1bee7'];
-            const totalBalloons = 10; // 減半
-            const duration = 30000; // 30秒
-            const interval = duration / totalBalloons; 
-
-            let count = 0;
-            const timer = setInterval(() => {
-                if (count >= totalBalloons) {
-                    clearInterval(timer);
-                    return;
-                }
-                
-                const b = document.createElement('div');
-                b.className = 'balloon';
-                b.style.background = colors[Math.floor(Math.random() * colors.length)];
-                b.style.left = Math.random() * 90 + 5 + '%'; 
-                const scale = 0.8 + Math.random() * 0.4;
-                b.style.transform = `scale(${scale})`;
-                
-                container.appendChild(b);
-                
-                // 35秒後移除 (配合 CSS animation floatUpSlow 35s)
-                setTimeout(() => b.remove(), 35000);
-                
-                count++;
-            }, interval);
-        }
-
-        // 煙花修復版
-        function triggerGrandFireworks() {
+        // --- 特效 ---
+        function triggerConfetti() {
             const canvas = document.getElementById('confetti-canvas');
             const ctx = canvas.getContext('2d');
             canvas.width = window.innerWidth; canvas.height = window.innerHeight;
             
             let particles = [];
-            const colors = ['#ff5252', '#ff4081', '#448aff', '#69f0ae', '#ffd740'];
+            const colors = ['#f44336', '#2196f3', '#ffeb3b', '#4caf50'];
 
-            function createExplosion(x, y) {
-                for(let i=0; i<30; i++) { 
-                    particles.push({
-                        x: x, y: y,
-                        vx: (Math.random()-0.5)*15, vy: (Math.random()-0.5)*15,
-                        size: Math.random()*6+4, color: colors[Math.floor(Math.random()*colors.length)], 
-                        life: 60 // 增加生命週期，確保看得到
-                    });
-                }
-            }
-
-            for(let i=0; i<10; i++) {
-                setTimeout(() => {
-                    const x = Math.random() * canvas.width;
-                    const y = Math.random() * (canvas.height * 0.7); 
-                    createExplosion(x, y);
-                }, i * 150);
+            for (let i = 0; i < 100; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height - canvas.height,
+                    w: Math.random() * 10 + 5, h: Math.random() * 5 + 5,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    vy: Math.random() * 3 + 2, vx: Math.random() * 2 - 1,
+                    r: Math.random() * 360, vr: Math.random() * 10 - 5
+                });
             }
 
             function animate() {
-                ctx.clearRect(0,0,canvas.width,canvas.height);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
                 let active = false;
                 particles.forEach(p => {
-                    if(p.life>0) {
-                        active=true; 
-                        p.x+=p.vx; p.y+=p.vy; p.vy+=0.5; // 重力
-                        p.life--;
-                        ctx.globalAlpha = p.life / 60;
-                        ctx.fillStyle=p.color; 
-                        ctx.fillRect(p.x,p.y,p.size,p.size);
+                    p.y += p.vy; p.x += Math.sin(p.y * 0.01) + p.vx; p.r += p.vr;
+                    if (p.y < canvas.height) {
+                        active = true;
+                        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r * Math.PI / 180);
+                        ctx.fillStyle = p.color; ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h); ctx.restore();
                     }
                 });
-                ctx.globalAlpha = 1.0;
-                if(active) requestAnimationFrame(animate);
-                else ctx.clearRect(0,0,canvas.width,canvas.height);
+                if (active) requestAnimationFrame(animate);
             }
             animate();
+        }
+
+        function triggerSmallPop(rect) {
+            // 簡單的小星星特效
+            const count = 8;
+            for(let i=0; i<count; i++) {
+                const p = document.createElement('div');
+                p.textContent = '⭐';
+                p.style.position = 'absolute';
+                p.style.left = (rect.left + rect.width/2) + 'px';
+                p.style.top = (rect.top + rect.height/2) + 'px';
+                p.style.fontSize = '1.5rem';
+                p.style.pointerEvents = 'none';
+                p.style.transition = 'all 0.8s ease-out';
+                p.style.zIndex = 5000;
+                document.body.appendChild(p);
+                
+                const angle = (i / count) * 2 * Math.PI;
+                const dist = 50;
+                
+                requestAnimationFrame(() => {
+                    p.style.transform = `translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist - 50}px) scale(0)`;
+                    p.style.opacity = 0;
+                });
+                setTimeout(() => p.remove(), 800);
+            }
         }
 
         window.onload = init;
