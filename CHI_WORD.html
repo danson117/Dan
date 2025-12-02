@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>中文閃卡 v3.2 (iPad錄音修復版)</title>
+    <title>中文閃卡 v3.3 (錄音循環修復版)</title>
     <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;900&family=Noto+Serif+HK:wght@500;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -15,8 +15,8 @@
             --accent: #ff7043;
             --btn-speak: #42a5f5;
             --btn-record: #ef5350;
-            --btn-pause: #ffca28; /* 黃色 */
-            --btn-pause-text: #37474f; /* 深色字，解決看不清的問題 */
+            --btn-pause: #ffca28;
+            --btn-pause-text: #37474f;
             --btn-master: #66bb6a;
             --danger: #ef5350;
             --import-btn: #fdd835;
@@ -179,7 +179,6 @@
 
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
-        /* --- 閃卡角落資訊 (大字版) --- */
         .card-info-bl {
             position: absolute; bottom: 20px; left: 25px;
             font-size: 2rem;
@@ -211,13 +210,7 @@
         .big-btn:disabled { background: #cfd8dc !important; box-shadow: none !important; color: #fff; cursor: not-allowed; top: 0; }
 
         .btn-speak { background: var(--btn-speak); box-shadow: 0 5px 0 #1e88e5; }
-        
-        /* 修正：暫停狀態改為深色字體 */
-        .btn-speak.paused { 
-            background: var(--btn-pause); 
-            box-shadow: 0 5px 0 #ffb300; 
-            color: var(--btn-pause-text); 
-        }
+        .btn-speak.paused { background: var(--btn-pause); box-shadow: 0 5px 0 #ffb300; color: var(--btn-pause-text); }
         
         .btn-record { background: var(--btn-record); box-shadow: 0 5px 0 #c62828; font-size: 1.5rem; }
         .btn-record.recording { background: #b71c1c; box-shadow: inset 0 0 10px rgba(0,0,0,0.3); top: 5px; }
@@ -276,6 +269,7 @@
             display: flex; justify-content: space-between; align-items: center;
             margin-bottom: 15px; text-align: left; border-bottom: 1px solid #eee; padding-bottom: 10px;
         }
+        .setting-label { flex: 1; padding-right: 10px; font-size: 0.95rem; font-weight: bold; color: #546e7a; }
         .setting-input { width: 80px; padding: 8px; border-radius: 10px; border: 1px solid #cfd8dc; text-align: center; font-size: 1.1rem; }
         .setting-input:focus { border-color: var(--accent); outline: none; background: #fff3e0; }
 
@@ -475,6 +469,12 @@
                 <input type="number" id="settingMasteryThreshold" class="setting-input" value="2" min="1" max="20" onchange="autoSaveSettings()" onfocus="this.select()">
             </div>
 
+            <!-- 新增設定 -->
+            <div class="setting-row">
+                <div class="setting-label">「熟練度判斷」觀看次數上限<br><small style="font-weight:normal; color:#90a4ae">(少過此數去已學識，多過則去還要練)</small></div>
+                <input type="number" id="settingMasteryViewLimit" class="setting-input" value="4" min="1" max="50" onchange="autoSaveSettings()" onfocus="this.select()">
+            </div>
+
             <button class="btn-reset" onclick="openConfirmModal()">🔄 重置所有學習統計</button>
 
             <div class="modal-actions" style="margin-top: 20px;">
@@ -514,6 +514,9 @@
         let recordingTimerInterval = null;
         let recordingSeconds = 0;
         
+        // 音效播放器 (全域重用，減少 iOS 阻擋機會)
+        let globalAudioPlayer = new Audio();
+        
         let state = {
             status: 'idle',
             timerId: null,
@@ -531,7 +534,8 @@
         let settings = {
             autoDelay: 4,
             repeatDelay: 3,
-            masteryThreshold: 2
+            masteryThreshold: 2,
+            masteryViewLimit: 4 // 新增設定預設值
         };
 
         function init() {
@@ -590,7 +594,7 @@
                              voices.find(v => v.lang === 'zh-HK');
         }
 
-        // --- 錄音功能 (iPad 格式修正 + 計時器) ---
+        // --- 錄音功能 ---
         function startRecording() {
             if (words.length === 0) return;
             if (isRecording) return;
@@ -600,16 +604,14 @@
                 return;
             }
             
-            // 停止當前任何語音播放
             window.speechSynthesis.cancel();
             stopEverything();
 
-            // 偵測支援的格式 (解決 iPad 錄音無聲問題)
             let options = { mimeType: 'audio/webm' };
             if (MediaRecorder.isTypeSupported('audio/mp4')) {
-                options = { mimeType: 'audio/mp4' }; // iOS 優先
+                options = { mimeType: 'audio/mp4' }; 
             } else if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
-                options = { mimeType: 'audio/webm;codecs=opus' }; // Chrome/Android
+                options = { mimeType: 'audio/webm;codecs=opus' };
             }
 
             navigator.mediaDevices.getUserMedia({ audio: true })
@@ -617,7 +619,6 @@
                     try {
                         mediaRecorder = new MediaRecorder(stream, options);
                     } catch (e) {
-                        // 如果指定格式失敗，嘗試預設
                         mediaRecorder = new MediaRecorder(stream);
                     }
 
@@ -627,7 +628,6 @@
                     };
                     
                     mediaRecorder.onstop = () => {
-                        // 建立 Blob 時使用正確的 Type
                         const blobType = mediaRecorder.mimeType || 'audio/webm';
                         const audioBlob = new Blob(audioChunks, { type: blobType });
                         words[currentIndex].audioBlob = audioBlob;
@@ -639,7 +639,6 @@
                     isRecording = true;
                     document.getElementById('recordBtn').classList.add('recording');
                     
-                    // 啟動計時器
                     recordingSeconds = 0;
                     updateRecordingUI();
                     recordingTimerInterval = setInterval(() => {
@@ -668,10 +667,7 @@
             isRecording = false;
             clearInterval(recordingTimerInterval);
             document.getElementById('recordBtn').classList.remove('recording');
-            
-            // 停止麥克風串流
             mediaRecorder.stream.getTracks().forEach(track => track.stop());
-            
             updateStatusUI();
         }
 
@@ -679,6 +675,7 @@
             clearTimeout(state.timerId);
             clearInterval(state.timerId);
             window.speechSynthesis.cancel();
+            globalAudioPlayer.pause();
             state.status = 'idle';
             state.repeatCount = 0;
             updateStatusUI();
@@ -704,6 +701,7 @@
             clearInterval(state.timerId);
             clearTimeout(state.timerId);
             window.speechSynthesis.cancel();
+            globalAudioPlayer.pause();
             state.status = 'paused';
             updateStatusUI();
         }
@@ -761,25 +759,40 @@
 
             const currentItem = words[currentIndex];
 
+            // 停止之前的音訊
+            window.speechSynthesis.cancel();
+            globalAudioPlayer.pause();
+
             if (currentItem.audioBlob) {
-                // 播放錄音
-                window.speechSynthesis.cancel(); // 確保 TTS 停止
+                // --- 錄音播放邏輯 (修正版) ---
                 const audioUrl = URL.createObjectURL(currentItem.audioBlob);
-                const audio = new Audio(audioUrl);
+                globalAudioPlayer.src = audioUrl;
+                globalAudioPlayer.load();
                 
-                // iOS Safari 有時需要 load
-                audio.load();
-                
-                audio.onended = () => {
+                // 綁定結束事件
+                globalAudioPlayer.onended = () => {
                     handleSpeakEnd();
-                    URL.revokeObjectURL(audioUrl); // 釋放記憶體
+                    URL.revokeObjectURL(audioUrl);
                 };
                 
-                audio.play().catch(e => {
-                    console.error("播放失敗:", e);
-                    // 如果播放失敗，回退到 TTS
-                    speakTTS(currentItem.text);
-                });
+                // 嘗試播放
+                const playPromise = globalAudioPlayer.play();
+                
+                if (playPromise !== undefined) {
+                    playPromise.catch(error => {
+                        console.error("播放錄音失敗 (可能被瀏覽器阻擋):", error);
+                        // 注意：這裡不再自動回退到 TTS，避免「讀三次」時變成機械人聲
+                        // 如果失敗，我們直接當作播放結束，進入下一次循環
+                        // 這樣至少不會發出奇怪的聲音，或者使用者可以再次點擊
+                        if (state.repeatCount === 0) {
+                            // 只有第一次點擊失敗才回退，因為第一次通常是使用者觸發，不應失敗
+                            speakTTS(currentItem.text);
+                        } else {
+                            // 如果是自動循環中失敗 (iOS 限制)，嘗試直接結束
+                            handleSpeakEnd();
+                        }
+                    });
+                }
             } else {
                 speakTTS(currentItem.text);
             }
@@ -1062,10 +1075,14 @@
             const indices = Array.from(checkboxes).map(c => parseInt(c.dataset.index)).sort((a,b) => b-a);
             
             indices.forEach(idx => {
-                words.push(reviewWords[idx]);
+                // 搬回時重置數據
+                let w = reviewWords[idx];
+                w.views = 0;
+                w.hits = 0;
+                words.push(w);
                 reviewWords.splice(idx, 1);
             });
-            showToast(`已退回 ${indices.length} 個到詞語表`);
+            showToast(`已退回 ${indices.length} 個到詞語表 (次數已重置)`);
             exitReviewMode();
             updateCard();
         }
@@ -1098,10 +1115,14 @@
             const indices = Array.from(checkboxes).map(c => parseInt(c.dataset.index)).sort((a,b) => b-a);
             
             indices.forEach(idx => {
-                words.push(masteredWords[idx]);
+                // 搬回時重置數據
+                let w = masteredWords[idx];
+                w.views = 0;
+                w.hits = 0;
+                words.push(w);
                 masteredWords.splice(idx, 1);
             });
-            showToast(`已還原 ${indices.length} 個到詞語表`);
+            showToast(`已還原 ${indices.length} 個到詞語表 (次數已重置)`);
             exitDeleteMode();
             updateCard();
         }
@@ -1196,7 +1217,8 @@
             if (item.hits >= settings.masteryThreshold) {
                 words.splice(currentIndex, 1);
                 
-                if (item.views > 2) {
+                // 熟練度判斷邏輯更新
+                if (item.views > settings.masteryViewLimit) {
                     reviewWords.push(item);
                     showToast(`👍 識咗，但要多練下「${item.text}」`);
                 } else {
@@ -1224,6 +1246,7 @@
             document.getElementById('settingAutoDelay').value = settings.autoDelay;
             document.getElementById('settingRepeatDelay').value = settings.repeatDelay;
             document.getElementById('settingMasteryThreshold').value = settings.masteryThreshold;
+            document.getElementById('settingMasteryViewLimit').value = settings.masteryViewLimit;
             document.getElementById('settingsModal').style.display = 'flex';
         }
 
@@ -1231,6 +1254,7 @@
             settings.autoDelay = parseInt(document.getElementById('settingAutoDelay').value) || 4;
             settings.repeatDelay = parseInt(document.getElementById('settingRepeatDelay').value) || 3;
             settings.masteryThreshold = parseInt(document.getElementById('settingMasteryThreshold').value) || 2;
+            settings.masteryViewLimit = parseInt(document.getElementById('settingMasteryViewLimit').value) || 4;
             renderLists();
             updateCard();
             showToast("設定已更新");
@@ -1246,7 +1270,6 @@
             masteredWords.forEach(w => { w.views = 0; w.hits = 0; });
             renderLists();
             updateCard();
-            // 同時關閉兩個視窗
             closeModal('confirmModal');
             closeModal('settingsModal');
             showToast("統計已重置");
