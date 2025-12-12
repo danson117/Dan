@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>English Spelling Assistant (Standalone)</title>
+    <title>English Spelling Assistant (v2.0)</title>
     <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700;900&family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -74,6 +74,7 @@
             background: var(--bg-secondary); color: var(--text-primary);
             resize: vertical; line-height: 1.8;
         }
+        .word-list-input:focus { outline: none; border-color: var(--accent-secondary); }
 
         .input-actions { margin-top: 1.25rem; display: flex; gap: 1rem; flex-wrap: wrap; }
         
@@ -85,16 +86,15 @@
 
         input[type="file"] { display: none; }
 
-        .voice-selection { margin: 1.75rem 0; }
-        .voice-options { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+        .order-selection { margin: 1.75rem 0; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
         
-        .voice-btn, .order-btn {
+        .order-btn {
             padding: 1rem 2rem; background: var(--bg-secondary);
             border: 2px solid var(--border-light); border-radius: 12px;
             cursor: pointer; font-weight: 600; color: var(--text-primary);
         }
 
-        .voice-btn.selected, .order-btn.selected {
+        .order-btn.selected {
             background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
             color: white; border-color: var(--accent-primary);
         }
@@ -156,7 +156,7 @@
 </head>
 <body>
 <div class="header">
-    <h1>📖 English Spelling Assistant (Web)</h1>
+    <h1>📖 English Spelling Assistant</h1>
 </div>
 
 <div class="container" id="mainPage">
@@ -165,15 +165,7 @@
         <div class="card">
             <div class="card-title">📝 Prepare Your Words</div>
 
-            <textarea class="word-list-input" id="wordListInput" placeholder="Enter one word or sentence per line, e.g.:
-beautiful
-The quick brown fox jumps over the lazy dog.
-excellence
-necessary">beautiful
-The quick brown fox jumps over the lazy dog.
-excellence
-necessary
-rhythm</textarea>
+            <textarea class="word-list-input" id="wordListInput"></textarea>
 
             <div class="input-actions">
                 <label class="file-input-label">
@@ -181,20 +173,6 @@ rhythm</textarea>
                     <input type="file" id="fileInput" accept=".txt">
                 </label>
                 <span id="fileName" style="color: var(--text-secondary); margin-left: 10px;"></span>
-            </div>
-            <p style="margin-top: 10px; font-size: 0.85rem; color: #666;">Note: Image capture (OCR) is removed in this standalone version.</p>
-
-            <div class="voice-selection">
-                <div style="text-align:center; margin-bottom:10px; font-weight:bold;">Voice Preference</div>
-                <div class="voice-options">
-                    <button class="voice-btn selected" id="femaleVoiceBtn" onclick="selectVoice('female')">
-                        👩 Female / Default
-                    </button>
-                    <button class="voice-btn" id="maleVoiceBtn" onclick="selectVoice('male')">
-                        👨 Male / Alt
-                    </button>
-                </div>
-                <div style="text-align:center; font-size:0.8rem; color:#888; margin-top:5px;">(Uses device system voices)</div>
             </div>
 
             <div class="order-selection">
@@ -286,13 +264,47 @@ rhythm</textarea>
     let currentIndex = 0;
     let playbackSpeed = 0.75;
     let orderMode = 'sequential';
-    let voiceMode = 'female';
     let wordByWordMode = false;
     let isPlaying = false;
     
-    // Voices
-    let selectedVoice = null;
+    // Voice Variables (from Flashcard App logic)
+    let englishVoice = null;
     let availableVoices = [];
+
+    // Default Text
+    const defaultText = "beautiful\nHello, world.\nThis is a test, ensuring it works.";
+
+    /* Initialization */
+    window.onload = function() {
+        const input = document.getElementById('wordListInput');
+        input.value = defaultText;
+
+        // Auto-clear logic
+        input.addEventListener('focus', function() {
+            if (this.value.trim() === defaultText.trim()) {
+                this.value = '';
+            }
+        });
+
+        // Load voices
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = loadVoices;
+            loadVoices();
+        }
+    };
+
+    /* Voice Loading Logic (Adapted from Flashcard App) */
+    function loadVoices() {
+        availableVoices = window.speechSynthesis.getVoices();
+        if (availableVoices.length === 0) return;
+
+        // Priority: Moira -> IE -> GB Female -> Any English
+        englishVoice = availableVoices.find(v => v.name.includes('Moira')) ||
+                       availableVoices.find(v => v.lang === 'en-IE') ||
+                       availableVoices.find(v => v.lang === 'en-GB' && v.name.includes('Female')) ||
+                       availableVoices.find(v => v.lang === 'en-GB') ||
+                       availableVoices.find(v => v.lang.startsWith('en'));
+    }
 
     // Helper: Number to English
     function numberToEnglish(n) {
@@ -307,30 +319,34 @@ rhythm</textarea>
         return String(n);
     }
 
-    // Helper: Punctuation
+    // Helper: Punctuation to Words (Standard Mode)
     function convertPunctuationToWords(sentence) {
-        return sentence
-            .replace(/\.{3}/g, ' ellipsis.')
-            .replace(/,/g, ' comma,')
-            .replace(/\./g, ' full stop.')
-            .replace(/\?/g, ' question mark.')
-            .replace(/!/g, ' exclamation mark.')
-            .replace(/:/g, ' colon,')
-            .replace(/;/g, ' semicolon,');
+        // In standard mode, we usually just read the sentence naturally.
+        // But if you want punctuation read out explicitly even in standard mode, keep this.
+        // However, usually standard mode reads "Hello, world" as "Hello [pause] world".
+        // Based on your request, I will keep explicit punctuation reading for Word-by-Word,
+        // but for standard mode, let's keep it natural unless it's specific symbols.
+        return sentence; 
     }
 
+    // Helper: Word by Word Logic (Enhanced)
     function buildWordByWordSentence(sentence) {
-        const match = sentence.match(/([.!?])\s*$/);
-        const endingPunc = match ? match[1] : '';
-        const core = sentence.replace(/[.!?]\s*$/, '');
-        const withCommaWords = core.replace(/,/g, ' comma ');
-        let result = withCommaWords.split(/\s+/).filter(w => w.length > 0).join('. ') + '.';
-        if (endingPunc) {
-            if (endingPunc === '.') result += ' full stop.';
-            else if (endingPunc === '?') result += ' question mark.';
-            else if (endingPunc === '!') result += ' exclamation mark.';
-        }
-        return result;
+        // 1. Replace punctuation with spoken words
+        let processed = sentence
+            .replace(/\.{3}/g, ' ellipsis ')
+            .replace(/,/g, ' comma ')
+            .replace(/\./g, ' full stop ')
+            .replace(/\?/g, ' question mark ')
+            .replace(/!/g, ' exclamation mark ')
+            .replace(/:/g, ' colon ')
+            .replace(/;/g, ' semicolon ');
+
+        // 2. Split by spaces to get words
+        const rawWords = processed.split(/\s+/).filter(w => w.length > 0);
+
+        // 3. Join with periods to force the TTS engine to pause between words
+        // e.g., "Hello comma world full stop" -> "Hello. comma. world. full stop."
+        return rawWords.join('. ') + '.';
     }
 
     /* File Input */
@@ -345,43 +361,6 @@ rhythm</textarea>
             reader.readAsText(file);
         }
     });
-
-    /* Voice Loading */
-    function loadVoices() {
-        availableVoices = window.speechSynthesis.getVoices();
-    }
-    window.speechSynthesis.onvoiceschanged = loadVoices;
-    loadVoices(); // Init
-
-    function getBestVoice() {
-        if(availableVoices.length === 0) loadVoices();
-        
-        // Filter for English
-        const engVoices = availableVoices.filter(v => v.lang.startsWith('en'));
-        if(engVoices.length === 0) return null;
-
-        // Try to match preference
-        if (voiceMode === 'male') {
-            // Try to find "Male" or "Daniel" or "Google UK English Male"
-            const male = engVoices.find(v => v.name.includes('Male') || v.name.includes('Daniel') || v.name.includes('Fred'));
-            if(male) return male;
-        } else {
-            // Female preference (or default)
-            const female = engVoices.find(v => v.name.includes('Female') || v.name.includes('Samantha') || v.name.includes('Victoria') || v.name.includes('Google US'));
-            if(female) return female;
-        }
-        
-        // Fallback
-        return engVoices[0]; 
-    }
-
-    function selectVoice(mode) {
-        voiceMode = mode;
-        document.getElementById('maleVoiceBtn').classList.remove('selected');
-        document.getElementById('femaleVoiceBtn').classList.remove('selected');
-        if (mode === 'male') document.getElementById('maleVoiceBtn').classList.add('selected');
-        else document.getElementById('femaleVoiceBtn').classList.add('selected');
-    }
 
     function selectOrder(mode) {
         orderMode = mode;
@@ -409,10 +388,10 @@ rhythm</textarea>
         const btn = document.getElementById('wordByWordBtn');
         if (wordByWordMode) {
             btn.classList.add('active');
-            setSpeed(1); // Usually faster for spelling
+            // Force slower speed for clarity in word-by-word
+            setSpeed(0.75); 
         } else {
             btn.classList.remove('active');
-            setSpeed(0.75);
         }
         if (isPlaying) {
             window.speechSynthesis.cancel();
@@ -441,8 +420,6 @@ rhythm</textarea>
         document.getElementById('completeSection').classList.remove('active');
         
         updateDisplay();
-        
-        // iOS requires user interaction to start audio context sometimes, but button click covers it.
         setTimeout(() => playCurrentWord(), 500);
     }
 
@@ -459,23 +436,25 @@ rhythm</textarea>
         const original = words[i];
         let textToSpeak = original;
 
+        // Check for "1. Word" format
         const qMatch = /^(\d+)\.\s*(.*)$/.exec(original);
+        
         if (qMatch) {
             const num = parseInt(qMatch[1], 10);
             const rest = qMatch[2];
             const numEnglish = numberToEnglish(num);
             const numberPart = `Number ${numEnglish}. `;
 
-            if (wordByWordMode && rest.trim().length > 0 && rest.includes(' ')) {
+            if (wordByWordMode) {
                 textToSpeak = numberPart + buildWordByWordSentence(rest);
             } else {
-                textToSpeak = numberPart + convertPunctuationToWords(rest);
+                textToSpeak = numberPart + rest;
             }
         } else {
-            if (wordByWordMode && original.includes(' ')) {
+            if (wordByWordMode) {
                 textToSpeak = buildWordByWordSentence(original);
             } else {
-                textToSpeak = convertPunctuationToWords(original);
+                textToSpeak = original;
             }
         }
         return textToSpeak;
@@ -487,11 +466,10 @@ rhythm</textarea>
         const text = buildSpeakText(currentIndex);
         const u = new SpeechSynthesisUtterance(text);
         
-        const voice = getBestVoice();
-        if(voice) u.voice = voice;
+        if(englishVoice) u.voice = englishVoice;
         
         u.rate = playbackSpeed;
-        u.lang = 'en-GB'; // Default fallback
+        u.lang = 'en-GB'; // Fallback
 
         u.onstart = () => {
             isPlaying = true;
