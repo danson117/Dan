@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>中英閃卡 v3.8 (Moira版)</title>
+    <title>中英閃卡 v3.9 (穩定修復版)</title>
     <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;900&family=Noto+Serif+HK:wght@500;700;900&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -36,12 +36,10 @@
             font-family: var(--font-ui);
             background: var(--bg-primary);
             color: var(--text-primary);
-            /* 修改 4: 使用 dvh 解決移動端網址列遮擋問題 */
             height: 100vh; 
             height: 100dvh; 
             overflow: hidden;
             padding: 15px;
-            /* 修改 4: 增加安全區域，防止瀏海遮擋 */
             padding-top: max(15px, env(safe-area-inset-top)); 
             display: flex;
             flex-direction: column;
@@ -133,14 +131,12 @@
         .word-tag-content { position: relative; z-index: 1; width: 100%; pointer-events: none; }
         .word-tag span { line-height: 1.1; width: 100%; display: block; }
         
-        /* 字體大小調整 */
         .len-1 span, .len-2 span { font-size: 1.2rem; }
         .len-3 span { font-size: 0.8rem; }
         .len-4 span { font-size: 0.9rem; display: flex; flex-direction: column; }
         .len-4 span i { font-style: normal; width: 100%; display: block; line-height: 1.0; }
         .len-long span { font-size: 0.7rem; word-break: break-word; }
         
-        /* 英文特別處理 */
         .is-english { font-family: var(--font-learn-en) !important; }
         .is-english.len-1 span, .is-english.len-2 span { font-size: 1.0rem; }
         .is-english.len-long span { font-size: 0.6rem; }
@@ -253,13 +249,12 @@
             background: #fff; cursor: pointer; font-weight: bold; color: #546e7a;
         }
 
-        /* Save Status Indicator */
         .save-status {
             position: fixed; bottom: 10px; right: 10px; font-size: 0.75rem; 
-            background: rgba(255,255,255,0.5); padding: 4px 8px; border-radius: 8px;
+            background: rgba(255,255,255,0.9); padding: 6px 12px; border-radius: 20px;
             color: #78909c; font-weight: bold; pointer-events: none; z-index: 1000;
-            display: flex; align-items: center; gap: 4px; opacity: 0.5;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            display: flex; align-items: center; gap: 6px; opacity: 0; transition: opacity 0.3s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #eceff1;
         }
 
         /* Modal */
@@ -298,12 +293,11 @@
         .setting-input { width: 80px; padding: 8px; border-radius: 10px; border: 1px solid #cfd8dc; text-align: center; font-size: 1.1rem; }
         .setting-input:focus { border-color: var(--accent); outline: none; background: #fff3e0; }
         
-        /* 修改 3: Toast 位置調整至上方，避免遮擋卡片 */
         .toast {
             position: fixed; 
-            top: 15%; /* 改為 15% 避免遮擋中間 */
+            top: 15%; 
             left: 50%; 
-            transform: translate(-50%, 0); /* 移除垂直置中 */
+            transform: translate(-50%, 0); 
             background: rgba(0,0,0,0.85); color: white; padding: 16px 30px;
             border-radius: 40px; font-weight: bold; font-size: 1.1rem; 
             z-index: 4000; opacity: 0; pointer-events: none; 
@@ -534,7 +528,6 @@
         let reviewWords = [];
         let masteredWords = [];
         
-        // 預設資料
         const initialWords = ["都是", "Apple", "這個", "Banana", "合成", "Orange", "共有"];
         const initialReview = [];
         const initialMastered = ["和", "高", "Cat"];
@@ -544,7 +537,6 @@
         let englishVoice = null;
         let availableVoices = [];
         
-        // 錄音相關
         let mediaRecorder;
         let audioChunks = [];
         let isRecording = false;
@@ -555,6 +547,7 @@
         let state = {
             status: 'idle',
             timerId: null,
+            watchdogId: null, // 新增：防止語音卡死的看門狗
             countdownRemaining: 0,
             countdownCallback: null,
             countdownLabel: '',
@@ -562,11 +555,11 @@
         };
         
         let shuffleDeck = [];
+        let historyStack = []; // 新增：隨機模式的歷史堆疊
         let isDeleteMode = false;
         let isWordSelectMode = false;
         let isReviewMode = false;
         
-        // 更新預設設定
         let settings = {
             autoDelay: 4,
             repeatDelay: 3,
@@ -575,10 +568,11 @@
         };
 
         // --- IndexedDB 系統 ---
-        const DB_NAME = 'FlashcardDB_v3.7'; // 升級 DB 名稱以防衝突
+        const DB_NAME = 'FlashcardDB_v3.9'; // 升級 DB
         const DB_VERSION = 1;
         let db = null;
         let isDirty = false;
+        let saveTimeout = null; // 防抖動
 
         function initDB() {
             return new Promise((resolve, reject) => {
@@ -613,7 +607,6 @@
                     else masteredWords = initialMastered.map(w => ({ text: w, views: 0, hits: 0, audioBlob: null }));
 
                     if (getSettings.result) {
-                        // 合併設定，防止舊資料覆蓋新欄位
                         settings = { ...settings, ...getSettings.result.value };
                     }
                     resolve(true);
@@ -622,29 +615,57 @@
             });
         }
 
-        async function saveDataToDB() {
-            if (!db) return;
+        // 優化：防抖動儲存，解決「儲存失敗」問題
+        function saveDataToDB() {
+            if (!db || !isDirty) return;
+            
+            // 如果已經在排隊儲存，取消上一次，重新計時
+            if (saveTimeout) clearTimeout(saveTimeout);
+            
             updateSaveStatus('saving');
-            return new Promise((resolve, reject) => {
+            
+            saveTimeout = setTimeout(() => {
                 const transaction = db.transaction(['data'], 'readwrite');
                 const store = transaction.objectStore('data');
-                store.put({ id: 'words', value: words });
-                store.put({ id: 'review', value: reviewWords });
-                store.put({ id: 'mastered', value: masteredWords });
-                store.put({ id: 'settings', value: settings });
-                transaction.oncomplete = () => { updateSaveStatus('saved'); isDirty = false; resolve(); };
-                transaction.onerror = (e) => { updateSaveStatus('error'); reject(e); };
-            });
+                
+                // 使用 Promise.all 並行寫入
+                try {
+                    store.put({ id: 'words', value: words });
+                    store.put({ id: 'review', value: reviewWords });
+                    store.put({ id: 'mastered', value: masteredWords });
+                    store.put({ id: 'settings', value: settings });
+                    
+                    transaction.oncomplete = () => { 
+                        updateSaveStatus('saved'); 
+                        isDirty = false; 
+                    };
+                    transaction.onerror = (e) => { 
+                        console.error("Save Error:", e);
+                        updateSaveStatus('error'); 
+                    };
+                } catch (e) {
+                    console.error("Transaction Error:", e);
+                    updateSaveStatus('error');
+                }
+            }, 1000); // 1秒延遲，合併多次寫入
         }
 
         function updateSaveStatus(status) {
             const el = document.getElementById('saveStatus');
+            el.style.opacity = 1;
             if (status === 'saving') { el.textContent = '💾 儲存中...'; el.style.color = '#ffa000'; }
-            else if (status === 'saved') { el.textContent = '☁️ 已儲存'; el.style.color = '#4caf50'; }
+            else if (status === 'saved') { 
+                el.textContent = '☁️ 已儲存'; el.style.color = '#4caf50'; 
+                setTimeout(() => { if(!isDirty) el.style.opacity = 0; }, 2000);
+            }
             else if (status === 'error') { el.textContent = '⚠️ 儲存失敗'; el.style.color = '#f44336'; }
         }
 
-        function markDirty() { isDirty = true; updateSaveStatus('saving'); }
+        function markDirty() { 
+            isDirty = true; 
+            updateSaveStatus('saving'); 
+            saveDataToDB(); 
+        }
 
         // --- 初始化 ---
         async function init() {
@@ -661,11 +682,8 @@
             updateCard();
             
             if ('speechSynthesis' in window) {
-                // iOS 需要時間加載語音
-                window.speechSynthesis.onvoiceschanged = () => {
-                    loadVoices();
-                };
-                loadVoices(); // 嘗試立即加載
+                window.speechSynthesis.onvoiceschanged = loadVoices;
+                loadVoices();
             }
 
             document.getElementById('autoPlayNext').addEventListener('change', (e) => {
@@ -673,8 +691,12 @@
                 else if (words.length > 0) startSequence();
             });
             
-            // 修改 2: 切換模式時重置洗牌堆
-            document.getElementById('randomOrder').addEventListener('change', () => { shuffleDeck = []; });
+            // 切換模式時重置洗牌堆和歷史
+            document.getElementById('randomOrder').addEventListener('change', () => { 
+                shuffleDeck = []; 
+                historyStack = []; 
+                updateCard(); // 更新進度條文字
+            });
 
             const recBtn = document.getElementById('recordBtn');
             recBtn.addEventListener('mousedown', (e) => { e.preventDefault(); startRecording(); });
@@ -683,19 +705,16 @@
             recBtn.addEventListener('touchend', (e) => { e.preventDefault(); stopRecording(); });
             recBtn.addEventListener('mouseleave', (e) => { if(isRecording) stopRecording(); });
 
-            setInterval(() => { if (isDirty) saveDataToDB(); }, 5000);
-            window.onbeforeunload = function (e) { if (isDirty) { saveDataToDB(); return "您有未儲存的變更"; } };
+            window.onbeforeunload = function (e) { if (isDirty) { return "您有未儲存的變更"; } };
         }
 
         function loadVoices() {
             availableVoices = window.speechSynthesis.getVoices();
             if (availableVoices.length === 0) return;
 
-            // 廣東話 (優先 Google)
             cantoneseVoice = availableVoices.find(v => v.lang === 'zh-HK' && v.name.includes('Google')) || 
                              availableVoices.find(v => v.lang === 'zh-HK');
             
-            // 鎖定 Moira (en-IE)
             englishVoice = availableVoices.find(v => v.name.includes('Moira')) ||
                            availableVoices.find(v => v.lang === 'en-IE') ||
                            availableVoices.find(v => v.lang === 'en-GB' && v.name.includes('Female')) ||
@@ -733,7 +752,7 @@
                     const audioBlob = new Blob(audioChunks, { type: blobType });
                     words[currentIndex].audioBlob = audioBlob;
                     showToast("錄音已保存！");
-                    markDirty(); saveDataToDB(); renderLists();
+                    markDirty(); renderLists();
                 };
 
                 mediaRecorder.start();
@@ -765,6 +784,7 @@
         function stopEverything() {
             clearTimeout(state.timerId);
             clearInterval(state.timerId);
+            clearTimeout(state.watchdogId); // 清除看門狗
             window.speechSynthesis.cancel();
             globalAudioPlayer.pause();
             state.status = 'idle';
@@ -785,6 +805,7 @@
         function pauseFlow() {
             clearInterval(state.timerId);
             clearTimeout(state.timerId);
+            clearTimeout(state.watchdogId);
             window.speechSynthesis.cancel();
             globalAudioPlayer.pause();
             state.status = 'paused';
@@ -829,6 +850,7 @@
             state.countdownCallback = null;
             updateStatusUI();
 
+            // 第一次讀才增加計數
             if (state.repeatCount === 0) {
                 words[currentIndex].views++;
                 markDirty(); renderLists(); updateCard();
@@ -836,23 +858,28 @@
 
             const currentItem = words[currentIndex];
 
-            // --- 音量修復關鍵步驟 ---
-            window.speechSynthesis.cancel(); // 1. 強制停止 TTS
-            globalAudioPlayer.pause();       // 2. 強制停止 Audio
+            window.speechSynthesis.cancel();
+            globalAudioPlayer.pause();
             globalAudioPlayer.currentTime = 0;
+
+            // 設置看門狗：如果 10 秒內沒有結束事件，強制結束
+            clearTimeout(state.watchdogId);
+            state.watchdogId = setTimeout(() => {
+                console.warn("Audio/TTS timeout watchdog triggered");
+                handleSpeakEnd();
+            }, 10000);
 
             if (currentItem.audioBlob) {
                 const audioUrl = URL.createObjectURL(currentItem.audioBlob);
                 globalAudioPlayer.src = audioUrl;
                 globalAudioPlayer.load();
-                globalAudioPlayer.volume = 1.0; // 3. 強制重置音量
+                globalAudioPlayer.volume = 1.0;
 
                 globalAudioPlayer.onended = () => {
                     handleSpeakEnd();
                     URL.revokeObjectURL(audioUrl);
                 };
                 
-                // 4. 加入微小延遲，讓瀏覽器有時間釋放 TTS 聲道
                 setTimeout(() => {
                     const playPromise = globalAudioPlayer.play();
                     if (playPromise !== undefined) {
@@ -862,7 +889,7 @@
                             else handleSpeakEnd();
                         });
                     }
-                }, 50); // 50ms 延遲
+                }, 50);
 
             } else {
                 speakTTS(currentItem.text);
@@ -873,9 +900,9 @@
             const u = new SpeechSynthesisUtterance(text);
             
             if (isEnglish(text)) {
-                u.lang = 'en-IE'; // 優先愛爾蘭
+                u.lang = 'en-IE'; 
                 if (englishVoice) u.voice = englishVoice;
-                u.rate = 0.9; // 英文稍微慢一點點更自然
+                u.rate = 0.9;
             } else {
                 u.lang = 'zh-HK';
                 if (cantoneseVoice) u.voice = cantoneseVoice;
@@ -883,22 +910,35 @@
             }
             
             u.onend = () => handleSpeakEnd();
+            u.onerror = (e) => {
+                console.error("TTS Error", e);
+                handleSpeakEnd(); // 錯誤也視為結束，防止卡死
+            };
             window.speechSynthesis.speak(u);
         }
 
+        // --- 核心修復：重讀與自動播放邏輯 ---
         function handleSpeakEnd() {
+            clearTimeout(state.watchdogId); // 清除看門狗
             if (state.status === 'paused') return;
+            
             const repeatThree = document.getElementById('repeatThreeTimes').checked;
             
+            // 優先處理重讀邏輯
             if (repeatThree && state.repeatCount < 2) {
                 state.repeatCount++;
-                runCountdown(settings.repeatDelay, "準備再讀", () => { speakWordFlow(); });
+                runCountdown(settings.repeatDelay, `準備再讀 (${state.repeatCount}/2)`, () => { speakWordFlow(); });
             } else {
+                // 重讀結束，或者不需要重讀
                 state.status = 'idle';
                 state.repeatCount = 0;
                 updateStatusUI();
+                
+                // 如果開啟了自動播放，則跳轉下一張
                 if (document.getElementById('autoPlayNext').checked) {
-                    state.timerId = setTimeout(nextWord, 1000);
+                    state.timerId = setTimeout(() => {
+                        nextWord();
+                    }, 1000);
                 }
             }
         }
@@ -972,7 +1012,6 @@
             const content = document.createElement('div');
             content.className = 'word-tag-content';
             
-            // 判斷是否英文並給予樣式
             if (isEnglish(word)) div.classList.add('is-english');
 
             const len = word.length;
@@ -1008,7 +1047,7 @@
                 const val = input.value.trim();
                 if (val) {
                     words.push({ text: val, views: 0, hits: 0, audioBlob: null });
-                    markDirty(); saveDataToDB(); renderLists(); updateCard();
+                    markDirty(); renderLists(); updateCard();
                 } else renderLists();
             };
             input.addEventListener('blur', save);
@@ -1059,8 +1098,7 @@
             const indices = Array.from(checkboxes).map(c => parseInt(c.dataset.index)).sort((a,b) => b-a);
             indices.forEach(idx => { masteredWords.push(words[idx]); words.splice(idx, 1); });
             if (currentIndex >= words.length) currentIndex = 0;
-            // 修改 2: 詞語列表變動，清空洗牌堆
-            shuffleDeck = [];
+            shuffleDeck = []; historyStack = [];
             showToast(`已移動 ${indices.length} 個到已學識`); markDirty(); exitWordSelectMode(); updateCard();
         }
         function confirmBatchMoveFromReviewToWords() {
@@ -1068,8 +1106,7 @@
             if (checkboxes.length === 0) return;
             const indices = Array.from(checkboxes).map(c => parseInt(c.dataset.index)).sort((a,b) => b-a);
             indices.forEach(idx => { let w = reviewWords[idx]; w.views = 0; w.hits = 0; words.push(w); reviewWords.splice(idx, 1); });
-            // 修改 2: 詞語列表變動，清空洗牌堆
-            shuffleDeck = [];
+            shuffleDeck = []; historyStack = [];
             showToast(`已退回 ${indices.length} 個到詞語表`); markDirty(); exitReviewMode(); updateCard();
         }
         function confirmBatchMoveFromReviewToMastered() {
@@ -1091,8 +1128,7 @@
             if (checkboxes.length === 0) return;
             const indices = Array.from(checkboxes).map(c => parseInt(c.dataset.index)).sort((a,b) => b-a);
             indices.forEach(idx => { let w = masteredWords[idx]; w.views = 0; w.hits = 0; words.push(w); masteredWords.splice(idx, 1); });
-            // 修改 2: 詞語列表變動，清空洗牌堆
-            shuffleDeck = [];
+            shuffleDeck = []; historyStack = [];
             showToast(`已還原 ${indices.length} 個到詞語表`); markDirty(); exitDeleteMode(); updateCard();
         }
         function toggleSelectAll(type) {
@@ -1111,6 +1147,7 @@
             const progressText = document.getElementById('progressText');
             const viewCountDisplay = document.getElementById('cardViewCount');
             const masteryDisplay = document.getElementById('cardMasteryProgress');
+            const isRandom = document.getElementById('randomOrder').checked;
             
             if (words.length === 0) {
                 display.textContent = "加字先！"; display.style.fontSize = "3rem"; display.classList.remove('en-font');
@@ -1124,7 +1161,6 @@
             const item = words[currentIndex];
             display.textContent = item.text;
             
-            // 英文顯示優化
             if (isEnglish(item.text)) {
                 display.classList.add('en-font');
                 display.style.fontSize = item.text.length > 8 ? "4rem" : "6rem";
@@ -1133,8 +1169,16 @@
                 display.style.fontSize = item.text.length > 3 ? "5rem" : "8rem";
             }
 
-            const pct = ((currentIndex + 1) / words.length) * 100;
-            progressFill.style.width = `${pct}%`; progressText.textContent = `${currentIndex + 1} / ${words.length}`;
+            // 進度條邏輯優化
+            if (isRandom) {
+                progressFill.style.width = '100%';
+                progressText.textContent = `隨機模式 (${words.length})`;
+            } else {
+                const pct = ((currentIndex + 1) / words.length) * 100;
+                progressFill.style.width = `${pct}%`; 
+                progressText.textContent = `${currentIndex + 1} / ${words.length}`;
+            }
+            
             viewCountDisplay.textContent = `👂 ${item.views}`;
             masteryDisplay.textContent = `🎯 ${item.hits}/${settings.masteryThreshold}`;
             renderLists();
@@ -1144,26 +1188,22 @@
             if (words.length === 0) return;
             stopEverything();
             
-            // 修改 2: 真正的洗牌模式 (Deck Shuffle)
+            // 核心修復：隨機模式的歷史堆疊
             if (document.getElementById('randomOrder').checked) {
-                // 如果洗牌堆空了，重新生成
+                // 記錄當前卡片到歷史
+                historyStack.push(currentIndex);
+                
                 if (shuffleDeck.length === 0) {
-                    // 建立一個包含所有索引的陣列 [0, 1, 2, ... length-1]
                     let newDeck = Array.from({length: words.length}, (_, i) => i);
-                    
-                    // 如果詞語多於一個，嘗試移除當前索引，避免連續重複
                     if (words.length > 1) {
                         newDeck = newDeck.filter(i => i !== currentIndex);
                     }
-                    
-                    // Fisher-Yates 洗牌算法
                     for (let i = newDeck.length - 1; i > 0; i--) {
                         const j = Math.floor(Math.random() * (i + 1));
                         [newDeck[i], newDeck[j]] = [newDeck[j], newDeck[i]];
                     }
                     shuffleDeck = newDeck;
                 }
-                // 從堆中取出一個索引
                 currentIndex = shuffleDeck.pop();
             } else {
                 currentIndex = (currentIndex + 1) % words.length;
@@ -1176,24 +1216,34 @@
         function previousWord() {
             if (words.length === 0) return;
             stopEverything();
-            currentIndex = (currentIndex - 1 + words.length) % words.length;
+            
+            // 核心修復：隨機模式回退
+            if (document.getElementById('randomOrder').checked) {
+                if (historyStack.length > 0) {
+                    currentIndex = historyStack.pop();
+                } else {
+                    // 如果沒有歷史，就隨機找一個（或者保持不變，這裡選擇保持不變提示用戶）
+                    showToast("已經係第一張");
+                    return;
+                }
+            } else {
+                currentIndex = (currentIndex - 1 + words.length) % words.length;
+            }
+            
             updateCard();
         }
 
         function handleMasteryClick(e) {
             if (words.length === 0) return;
-
-            // 修改 1: 立即停止舊的計時器，防止倒數繼續
             stopEverything();
 
             const item = words[currentIndex];
             item.hits++;
             
             if (item.hits >= settings.masteryThreshold) {
+                // 真正學識
                 words.splice(currentIndex, 1);
-                
-                // 修改 2: 詞語數量改變，必須清空洗牌堆，否則索引會錯亂
-                shuffleDeck = [];
+                shuffleDeck = []; historyStack = []; // 清空隨機狀態
 
                 if (item.views > settings.masteryViewLimit) {
                     reviewWords.push(item);
@@ -1205,16 +1255,25 @@
                 }
                 if (words.length === 0) currentIndex = 0;
                 else if (currentIndex >= words.length) currentIndex = 0;
+                
                 markDirty(); renderLists(); updateCard();
+                
+                // 如果還有字，繼續自動播放
+                if (document.getElementById('autoPlayNext').checked && words.length > 0) {
+                    startSequence();
+                }
             } else {
+                // 還沒完全學識，但用戶點了按鈕
                 const rect = e.target.getBoundingClientRect();
                 triggerConfetti(rect.left + rect.width / 2, rect.top + rect.height / 2, 0.4);
                 markDirty(); renderLists(); updateCard();
-            }
-
-            // 修改 1: 如果開啟了自動模式，重新開始全新的倒數
-            if (document.getElementById('autoPlayNext').checked && words.length > 0) {
-                startSequence();
+                
+                // 核心修復：即使還沒學識，點了按鈕也要去下一張
+                // 給一點時間讓用戶看到 +1 的變化
+                setTimeout(() => {
+                    if (document.getElementById('autoPlayNext').checked) startSequence();
+                    else nextWord();
+                }, 500);
             }
         }
 
@@ -1223,7 +1282,6 @@
             document.getElementById('settingRepeatDelay').value = settings.repeatDelay;
             document.getElementById('settingMasteryThreshold').value = settings.masteryThreshold;
             document.getElementById('settingMasteryViewLimit').value = settings.masteryViewLimit;
-            
             document.getElementById('settingsModal').style.display = 'flex';
         }
 
@@ -1232,8 +1290,7 @@
             settings.repeatDelay = parseInt(document.getElementById('settingRepeatDelay').value) || 3;
             settings.masteryThreshold = parseInt(document.getElementById('settingMasteryThreshold').value) || 2;
             settings.masteryViewLimit = parseInt(document.getElementById('settingMasteryViewLimit').value) || 1;
-            
-            markDirty(); saveDataToDB(); renderLists(); updateCard(); showToast("設定已更新");
+            markDirty(); updateCard(); showToast("設定已更新");
         }
 
         function resetSettings() {
@@ -1241,10 +1298,7 @@
             settings.repeatDelay = 3;
             settings.masteryThreshold = 2;
             settings.masteryViewLimit = 1;
-            
-            openSettingsModal(); // Refresh UI
-            markDirty(); saveDataToDB();
-            showToast("設定已還原為初始值");
+            openSettingsModal(); markDirty(); showToast("設定已還原為初始值");
         }
 
         function openConfirmModal() { document.getElementById('confirmModal').style.display = 'flex'; }
@@ -1253,16 +1307,15 @@
             words.forEach(w => { w.views = 0; w.hits = 0; });
             reviewWords.forEach(w => { w.views = 0; w.hits = 0; });
             masteredWords.forEach(w => { w.views = 0; w.hits = 0; });
-            markDirty(); saveDataToDB(); renderLists(); updateCard();
+            markDirty(); renderLists(); updateCard();
             closeModal('confirmModal'); closeModal('settingsModal'); showToast("統計已重置");
         }
 
         function clearAllData() {
             if(confirm("⚠️ 嚴重警告：這會刪除所有詞語、錄音和進度！確定嗎？")) {
                 words = []; reviewWords = []; masteredWords = [];
-                // 修改 2: 清空資料時也要清空洗牌堆
-                shuffleDeck = [];
-                markDirty(); saveDataToDB(); renderLists(); updateCard();
+                shuffleDeck = []; historyStack = [];
+                markDirty(); renderLists(); updateCard();
                 closeModal('settingsModal'); showToast("所有資料已清空");
             }
         }
@@ -1299,9 +1352,8 @@
                 });
             });
             words = newWords; reviewWords = newReview; masteredWords = newMastered;
-            // 修改 2: 導入新資料，清空洗牌堆
-            shuffleDeck = [];
-            currentIndex = 0; markDirty(); saveDataToDB(); renderLists(); updateCard();
+            shuffleDeck = []; historyStack = [];
+            currentIndex = 0; markDirty(); renderLists(); updateCard();
             closeModal('importModal'); showToast("已更新列表 (錄音已重置)");
         }
 
