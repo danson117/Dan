@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>中英閃卡 v3.10 (洗牌增強版)</title>
+    <title>中英閃卡 v3.20 (完美邏輯版)</title>
     <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;900&family=Noto+Serif+HK:wght@500;700;900&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -281,8 +281,16 @@
         .btn-save { background: var(--accent); color: white; }
         .btn-paste { background: var(--import-btn); color: #333; }
         .btn-no { background: #eceff1; color: #455a64; }
-        .btn-reset { background: var(--reset-btn); color: white; width: 100%; margin-top: 10px; padding: 12px; border-radius: 10px; border: none; font-weight: bold; font-size: 1rem; cursor: pointer; }
-        .btn-danger { background: var(--danger); color: white; width: 100%; margin-top: 10px; padding: 12px; border-radius: 10px; border: none; font-weight: bold; font-size: 1rem; cursor: pointer; }
+        
+        /* New Settings Grid */
+        .settings-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;
+        }
+        .btn-setting-action {
+            width: 100%; padding: 15px 5px; border-radius: 12px; border: none;
+            font-weight: bold; font-size: 0.9rem; cursor: pointer; color: white;
+            display: flex; flex-direction: column; align-items: center; gap: 5px;
+        }
 
         .setting-row {
             display: flex; justify-content: space-between; align-items: center;
@@ -432,7 +440,6 @@
                     🎤
                 </button>
 
-                <!-- 修改 1: 按鈕文字改為 "我識讀!" -->
                 <button class="big-btn btn-master" id="masteredBtn" onclick="handleMasteryClick(event)">
                     ✅ 我識讀!
                 </button>
@@ -502,9 +509,28 @@
                 <input type="number" id="settingMasteryViewLimit" class="setting-input" value="1" min="1" max="50" onchange="autoSaveSettings()" onfocus="this.select()">
             </div>
 
-            <button class="btn-reset" onclick="openConfirmModal()">🔄 重置所有學習統計</button>
-            <button class="btn-reset" style="background:#90a4ae" onclick="resetSettings()">↩️ 還原初始設定 (4, 3, 2, 1)</button>
-            <button class="btn-danger" onclick="clearAllData()">🗑️ 清空所有資料 (包括錄音)</button>
+            <!-- 2x2 Grid for Reset Actions -->
+            <div class="settings-grid">
+                <button class="btn-setting-action" style="background:#5c6bc0;" onclick="confirmAction('resetStats')">
+                    <span>📊 重置統計</span>
+                    <span style="font-size:0.7rem; opacity:0.8; font-weight:normal">聽讀次數歸零</span>
+                </button>
+                
+                <button class="btn-setting-action" style="background:#78909c;" onclick="confirmAction('resetSettings')">
+                    <span>↩️ 還原設定</span>
+                    <span style="font-size:0.7rem; opacity:0.8; font-weight:normal">初始值 (4, 3, 2, 1)</span>
+                </button>
+                
+                <button class="btn-setting-action" style="background:#ff9800;" onclick="confirmAction('clearAudio')">
+                    <span>🗑️ 清除錄音</span>
+                    <span style="font-size:0.7rem; opacity:0.8; font-weight:normal">保留文字，刪聲音</span>
+                </button>
+                
+                <button class="btn-setting-action" style="background:#ef5350;" onclick="confirmAction('clearAll')">
+                    <span>💥 清空所有</span>
+                    <span style="font-size:0.7rem; opacity:0.8; font-weight:normal">刪除全部資料</span>
+                </button>
+            </div>
 
             <div class="modal-actions" style="margin-top: 20px;">
                 <button class="modal-btn btn-no" onclick="closeModal('settingsModal')">關閉</button>
@@ -512,13 +538,13 @@
         </div>
     </div>
 
-    <!-- 確認視窗 -->
+    <!-- 通用確認視窗 -->
     <div id="confirmModal" class="custom-modal" style="z-index: 3500;">
         <div class="modal-content" style="max-width: 350px;">
-            <div class="modal-title" style="font-size: 1.2rem; margin-bottom: 10px;">⚠️ 確認重置</div>
-            <p style="color: #555; margin-bottom: 20px;">確定要將所有詞語的聽讀次數和熟練度歸零嗎？此操作無法復原。</p>
+            <div class="modal-title" style="font-size: 1.2rem; margin-bottom: 10px;">⚠️ 確認操作</div>
+            <p id="confirmMessage" style="color: #555; margin-bottom: 20px;">確定要執行嗎？</p>
             <div class="modal-actions">
-                <button class="modal-btn btn-reset" style="margin-top:0" onclick="executeReset()">確定重置</button>
+                <button id="confirmBtn" class="modal-btn btn-save" style="margin-top:0">確定</button>
                 <button class="modal-btn btn-no" onclick="closeModal('confirmModal')">取消</button>
             </div>
         </div>
@@ -555,8 +581,9 @@
             repeatCount: 0
         };
         
-        let shuffleDeck = [];
-        let historyStack = [];
+        // --- 洗牌邏輯核心 ---
+        // 使用 Round ID 標記法，比 Array Shuffle 更穩定
+        let currentRoundId = 1; 
         let isDeleteMode = false;
         let isWordSelectMode = false;
         let isReviewMode = false;
@@ -569,7 +596,7 @@
         };
 
         // --- IndexedDB 系統 ---
-        const DB_NAME = 'FlashcardDB_v3.10'; // 升級 DB
+        const DB_NAME = 'FlashcardDB_v3.20';
         const DB_VERSION = 1;
         let db = null;
         let isDirty = false;
@@ -599,17 +626,19 @@
 
                 transaction.oncomplete = () => {
                     if (getWords.result) words = getWords.result.value;
-                    else words = initialWords.map(w => ({ text: w, views: 0, hits: 0, audioBlob: null }));
+                    else words = initialWords.map(w => ({ text: w, views: 0, hits: 0, audioBlob: null, roundId: 0 }));
 
                     if (getReview.result) reviewWords = getReview.result.value;
-                    else reviewWords = initialReview.map(w => ({ text: w, views: 0, hits: 0, audioBlob: null }));
+                    else reviewWords = initialReview.map(w => ({ text: w, views: 0, hits: 0, audioBlob: null, roundId: 0 }));
 
                     if (getMastered.result) masteredWords = getMastered.result.value;
-                    else masteredWords = initialMastered.map(w => ({ text: w, views: 0, hits: 0, audioBlob: null }));
+                    else masteredWords = initialMastered.map(w => ({ text: w, views: 0, hits: 0, audioBlob: null, roundId: 0 }));
 
                     if (getSettings.result) {
                         settings = { ...settings, ...getSettings.result.value };
                     }
+                    // 初始化 Round ID，確保舊數據兼容
+                    words.forEach(w => { if(!w.roundId) w.roundId = 0; });
                     resolve(true);
                 };
                 transaction.onerror = () => resolve(false);
@@ -670,12 +699,21 @@
 
             document.getElementById('autoPlayNext').addEventListener('change', (e) => {
                 if (!e.target.checked) stopEverything();
-                else if (words.length > 0) startSequence();
+                else if (words.length > 0) {
+                    // 確保開始前狀態乾淨
+                    window.speechSynthesis.cancel();
+                    // 如果當前沒有選中卡片，或者需要初始化
+                    if (currentIndex === -1 || currentIndex >= words.length) {
+                        nextWord(); // 這會觸發 startSequence 因為 autoPlay 已經是 true
+                    } else {
+                        startSequence();
+                    }
+                }
             });
             
             document.getElementById('randomOrder').addEventListener('change', () => { 
-                shuffleDeck = []; 
-                historyStack = []; 
+                // 切換模式時，重置所有 Round ID，讓洗牌重新開始
+                currentRoundId++;
                 updateCard(); 
             });
 
@@ -802,9 +840,20 @@
         }
 
         function startSequence() {
-            stopEverything();
+            // 強制停止所有聲音，防止瀏覽器隊列卡住
+            window.speechSynthesis.cancel();
+            globalAudioPlayer.pause();
+            clearTimeout(state.timerId);
+            clearInterval(state.timerId);
+            
+            // 確保有卡片
+            if (words.length === 0) return;
+            
             state.repeatCount = 0;
-            runCountdown(settings.autoDelay, "試下自己讀", () => { speakWordFlow(); });
+            runCountdown(settings.autoDelay, "試下自己讀", () => { 
+                // 使用 setTimeout 0 斷開調用棧，防止回調地獄或瀏覽器限制
+                setTimeout(() => speakWordFlow(), 0); 
+            });
         }
 
         function runCountdown(seconds, text, callback) {
@@ -838,6 +887,7 @@
 
             const currentItem = words[currentIndex];
 
+            // 再次確保音頻乾淨
             window.speechSynthesis.cancel();
             globalAudioPlayer.pause();
             globalAudioPlayer.currentTime = 0;
@@ -864,6 +914,7 @@
                     if (playPromise !== undefined) {
                         playPromise.catch(error => {
                             console.error("播放錄音失敗:", error);
+                            // 如果錄音播放失敗，嘗試 TTS
                             if (state.repeatCount === 0) speakTTS(currentItem.text);
                             else handleSpeakEnd();
                         });
@@ -891,6 +942,7 @@
             u.onend = () => handleSpeakEnd();
             u.onerror = (e) => {
                 console.error("TTS Error", e);
+                // 即使出錯，也要繼續流程
                 handleSpeakEnd();
             };
             window.speechSynthesis.speak(u);
@@ -913,7 +965,7 @@
                 if (document.getElementById('autoPlayNext').checked) {
                     state.timerId = setTimeout(() => {
                         nextWord();
-                    }, 1000);
+                    }, 500); // 縮短一點等待時間，感覺更流暢
                 }
             }
         }
@@ -1021,8 +1073,7 @@
             const save = () => {
                 const val = input.value.trim();
                 if (val) {
-                    words.push({ text: val, views: 0, hits: 0, audioBlob: null });
-                    shuffleDeck = []; // 新增詞彙，重置洗牌
+                    words.push({ text: val, views: 0, hits: 0, audioBlob: null, roundId: 0 });
                     markDirty(); renderLists(); updateCard();
                 } else renderLists();
             };
@@ -1074,15 +1125,13 @@
             const indices = Array.from(checkboxes).map(c => parseInt(c.dataset.index)).sort((a,b) => b-a);
             indices.forEach(idx => { masteredWords.push(words[idx]); words.splice(idx, 1); });
             if (currentIndex >= words.length) currentIndex = 0;
-            shuffleDeck = []; historyStack = [];
             showToast(`已移動 ${indices.length} 個到已學識`); markDirty(); exitWordSelectMode(); updateCard();
         }
         function confirmBatchMoveFromReviewToWords() {
             const checkboxes = document.querySelectorAll('#reviewList .select-checkbox:checked');
             if (checkboxes.length === 0) return;
             const indices = Array.from(checkboxes).map(c => parseInt(c.dataset.index)).sort((a,b) => b-a);
-            indices.forEach(idx => { let w = reviewWords[idx]; w.views = 0; w.hits = 0; words.push(w); reviewWords.splice(idx, 1); });
-            shuffleDeck = []; historyStack = [];
+            indices.forEach(idx => { let w = reviewWords[idx]; w.views = 0; w.hits = 0; w.roundId = 0; words.push(w); reviewWords.splice(idx, 1); });
             showToast(`已退回 ${indices.length} 個到詞語表`); markDirty(); exitReviewMode(); updateCard();
         }
         function confirmBatchMoveFromReviewToMastered() {
@@ -1103,8 +1152,7 @@
             const checkboxes = document.querySelectorAll('#masteredList .select-checkbox:checked');
             if (checkboxes.length === 0) return;
             const indices = Array.from(checkboxes).map(c => parseInt(c.dataset.index)).sort((a,b) => b-a);
-            indices.forEach(idx => { let w = masteredWords[idx]; w.views = 0; w.hits = 0; words.push(w); masteredWords.splice(idx, 1); });
-            shuffleDeck = []; historyStack = [];
+            indices.forEach(idx => { let w = masteredWords[idx]; w.views = 0; w.hits = 0; w.roundId = 0; words.push(w); masteredWords.splice(idx, 1); });
             showToast(`已還原 ${indices.length} 個到詞語表`); markDirty(); exitDeleteMode(); updateCard();
         }
         function toggleSelectAll(type) {
@@ -1133,6 +1181,9 @@
                 renderLists(); return;
             }
 
+            // 確保 currentIndex 有效
+            if (currentIndex >= words.length) currentIndex = 0;
+
             document.getElementById('speakBtn').disabled = false; document.getElementById('recordBtn').disabled = false; document.getElementById('masteredBtn').disabled = false;
             const item = words[currentIndex];
             display.textContent = item.text;
@@ -1146,8 +1197,10 @@
             }
 
             if (isRandom) {
+                // 計算本回合剩餘
+                const remainingInRound = words.filter(w => w.roundId !== currentRoundId).length;
                 progressFill.style.width = '100%';
-                progressText.textContent = `隨機模式 (${words.length})`;
+                progressText.textContent = `隨機模式 (本輪剩 ${remainingInRound})`;
             } else {
                 const pct = ((currentIndex + 1) / words.length) * 100;
                 progressFill.style.width = `${pct}%`; 
@@ -1163,32 +1216,26 @@
             if (words.length === 0) return;
             stopEverything();
             
-            // 修改 3: 嚴格的 Round-based 洗牌邏輯
             if (document.getElementById('randomOrder').checked) {
-                historyStack.push(currentIndex);
+                // --- 完美洗牌邏輯 (Round ID) ---
+                // 1. 找出所有「本回合還沒讀過」的候選字
+                let candidates = words.filter(w => w.roundId !== currentRoundId);
                 
-                // 如果牌堆空了，重新生成一個完整的 Round
-                if (shuffleDeck.length === 0) {
-                    // 建立一個包含所有索引的陣列 [0, 1, ... length-1]
-                    let newDeck = Array.from({length: words.length}, (_, i) => i);
-                    
-                    // Fisher-Yates 洗牌
-                    for (let i = newDeck.length - 1; i > 0; i--) {
-                        const j = Math.floor(Math.random() * (i + 1));
-                        [newDeck[i], newDeck[j]] = [newDeck[j], newDeck[i]];
-                    }
-                    
-                    // 防連續：如果新牌堆的第一張是剛剛讀完的那張，且總數大於1，則交換
-                    if (words.length > 1 && newDeck[newDeck.length - 1] === currentIndex) {
-                        // 將最後一張（即將被 pop 出來的那張）與第一張交換
-                        [newDeck[0], newDeck[newDeck.length - 1]] = [newDeck[newDeck.length - 1], newDeck[0]];
-                    }
-                    
-                    shuffleDeck = newDeck;
+                // 2. 如果候選字是空的（代表本回合全部讀完了），開啟新回合
+                if (candidates.length === 0) {
+                    currentRoundId++;
+                    candidates = words; // 所有字重新變成候選
                 }
                 
-                // 從牌堆取出下一張
-                currentIndex = shuffleDeck.pop();
+                // 3. 從候選字中隨機挑一個
+                const nextItem = candidates[Math.floor(Math.random() * candidates.length)];
+                
+                // 4. 找到這個字在主列表中的索引
+                currentIndex = words.indexOf(nextItem);
+                
+                // 5. 標記這個字為「本回合已讀」
+                words[currentIndex].roundId = currentRoundId;
+                
             } else {
                 currentIndex = (currentIndex + 1) % words.length;
             }
@@ -1200,18 +1247,7 @@
         function previousWord() {
             if (words.length === 0) return;
             stopEverything();
-            
-            if (document.getElementById('randomOrder').checked) {
-                if (historyStack.length > 0) {
-                    currentIndex = historyStack.pop();
-                } else {
-                    showToast("已經係第一張");
-                    return;
-                }
-            } else {
-                currentIndex = (currentIndex - 1 + words.length) % words.length;
-            }
-            
+            currentIndex = (currentIndex - 1 + words.length) % words.length;
             updateCard();
         }
 
@@ -1223,9 +1259,11 @@
             item.hits++;
             
             if (item.hits >= settings.masteryThreshold) {
-                // 真正學識
+                // --- 真正學識 ---
                 words.splice(currentIndex, 1);
-                shuffleDeck = []; historyStack = []; // 列表變動，重置洗牌
+                // 注意：因為移除了元素，currentIndex 指向的內容變了，但因為我們用 Round ID 邏輯，
+                // 下一次 nextWord() 會自動過濾掉已移除的（因為不在 words 裡了），
+                // 並且會從剩下的 words 裡找 roundId 不符的，所以邏輯依然穩固。
 
                 if (item.views > settings.masteryViewLimit) {
                     reviewWords.push(item);
@@ -1235,25 +1273,34 @@
                     showToast(`🎉 太棒了！輕鬆學識「${item.text}」`);
                     triggerConfetti(null, null, 1.0);
                 }
-                if (words.length === 0) currentIndex = 0;
-                else if (currentIndex >= words.length) currentIndex = 0;
+                
+                // 修正索引防止溢出
+                if (currentIndex >= words.length) currentIndex = 0;
                 
                 markDirty(); renderLists(); updateCard();
                 
-                if (document.getElementById('autoPlayNext').checked && words.length > 0) {
-                    startSequence();
+                // 立即跳下一張
+                if (words.length > 0) {
+                    if (document.getElementById('autoPlayNext').checked) startSequence();
+                    else if (document.getElementById('randomOrder').checked) nextWord(); // 隨機模式下必須調用 nextWord 找新卡
+                    else updateCard(); // 順序模式下，splice 後當前位置就是下一張，直接更新即可
                 }
+
             } else {
-                // 還沒完全學識，但用戶點了按鈕
+                // --- 未完全學識 (例如 1/2) ---
                 const rect = e.target.getBoundingClientRect();
                 triggerConfetti(rect.left + rect.width / 2, rect.top + rect.height / 2, 0.4);
                 markDirty(); renderLists(); updateCard();
                 
-                // 修改 2: 強制跳轉下一張 (無論是否學識)
-                setTimeout(() => {
-                    if (document.getElementById('autoPlayNext').checked) startSequence();
-                    else nextWord();
-                }, 500);
+                // 這裡是你要求的修改：即使沒學完，也要立刻跳下一張
+                // 我們不使用 setTimeout 延遲，而是直接跳
+                if (document.getElementById('autoPlayNext').checked) {
+                    // 自動模式下，nextWord 會觸發 startSequence
+                    nextWord(); 
+                } else {
+                    // 手動模式下，直接跳下一張
+                    nextWord();
+                }
             }
         }
 
@@ -1273,32 +1320,60 @@
             markDirty(); updateCard(); showToast("設定已更新");
         }
 
-        function resetSettings() {
-            settings.autoDelay = 4;
-            settings.repeatDelay = 3;
-            settings.masteryThreshold = 2;
-            settings.masteryViewLimit = 1;
-            openSettingsModal(); markDirty(); showToast("設定已還原為初始值");
+        // --- 統一確認操作邏輯 ---
+        let pendingAction = null;
+
+        function confirmAction(actionType) {
+            pendingAction = actionType;
+            const msgEl = document.getElementById('confirmMessage');
+            const btnEl = document.getElementById('confirmBtn');
+            
+            document.getElementById('confirmModal').style.display = 'flex';
+            
+            if (actionType === 'resetStats') {
+                msgEl.textContent = "確定要將所有詞語的聽讀次數和熟練度歸零嗎？";
+                btnEl.className = "modal-btn btn-save"; btnEl.style.background = "#5c6bc0";
+            } else if (actionType === 'resetSettings') {
+                msgEl.textContent = "確定要還原設定到初始值 (4, 3, 2, 1) 嗎？";
+                btnEl.className = "modal-btn btn-save"; btnEl.style.background = "#78909c";
+            } else if (actionType === 'clearAudio') {
+                msgEl.textContent = "確定要清除所有自製錄音嗎？文字會保留。";
+                btnEl.className = "modal-btn btn-save"; btnEl.style.background = "#ff9800";
+            } else if (actionType === 'clearAll') {
+                msgEl.textContent = "⚠️ 嚴重警告：這會刪除所有資料！確定嗎？";
+                btnEl.className = "modal-btn btn-danger"; btnEl.style.background = "#ef5350";
+            }
         }
 
-        function openConfirmModal() { document.getElementById('confirmModal').style.display = 'flex'; }
-
-        function executeReset() {
-            words.forEach(w => { w.views = 0; w.hits = 0; });
-            reviewWords.forEach(w => { w.views = 0; w.hits = 0; });
-            masteredWords.forEach(w => { w.views = 0; w.hits = 0; });
-            markDirty(); renderLists(); updateCard();
-            closeModal('confirmModal'); closeModal('settingsModal'); showToast("統計已重置");
-        }
-
-        function clearAllData() {
-            if(confirm("⚠️ 嚴重警告：這會刪除所有詞語、錄音和進度！確定嗎？")) {
+        document.getElementById('confirmBtn').onclick = () => {
+            if (!pendingAction) return;
+            
+            if (pendingAction === 'resetStats') {
+                words.forEach(w => { w.views = 0; w.hits = 0; });
+                reviewWords.forEach(w => { w.views = 0; w.hits = 0; });
+                masteredWords.forEach(w => { w.views = 0; w.hits = 0; });
+                markDirty(); renderLists(); updateCard();
+                showToast("統計已重置");
+            } else if (pendingAction === 'resetSettings') {
+                settings.autoDelay = 4; settings.repeatDelay = 3;
+                settings.masteryThreshold = 2; settings.masteryViewLimit = 1;
+                openSettingsModal(); markDirty(); showToast("設定已還原");
+            } else if (pendingAction === 'clearAudio') {
+                let count = 0;
+                [words, reviewWords, masteredWords].forEach(list => {
+                    list.forEach(w => { if(w.audioBlob) { w.audioBlob = null; count++; } });
+                });
+                markDirty(); renderLists(); updateCard();
+                showToast(`已清除 ${count} 個錄音`);
+            } else if (pendingAction === 'clearAll') {
                 words = []; reviewWords = []; masteredWords = [];
-                shuffleDeck = []; historyStack = [];
                 markDirty(); renderLists(); updateCard();
                 closeModal('settingsModal'); showToast("所有資料已清空");
             }
-        }
+            
+            closeModal('confirmModal');
+            pendingAction = null;
+        };
 
         function openEditModal() {
             const text = `【詞語表】\n${words.map(w=>w.text).join('\n')}\n\n【還要練】\n${reviewWords.map(w=>w.text).join('\n')}\n\n【已學識】\n${masteredWords.map(w=>w.text).join('\n')}`;
@@ -1325,14 +1400,14 @@
                 if (line.includes('【已學識】')) { currentSection = 'mastered'; return; }
                 const items = line.split(/[,，]+/).map(w => w.trim()).filter(w => w);
                 items.forEach(w => {
-                    const obj = { text: w, views: 0, hits: 0, audioBlob: null };
+                    const obj = { text: w, views: 0, hits: 0, audioBlob: null, roundId: 0 };
                     if (currentSection === 'words') newWords.push(obj);
                     else if (currentSection === 'review') newReview.push(obj);
                     else newMastered.push(obj);
                 });
             });
             words = newWords; reviewWords = newReview; masteredWords = newMastered;
-            shuffleDeck = []; historyStack = [];
+            currentRoundId = 1; // 重置洗牌
             currentIndex = 0; markDirty(); renderLists(); updateCard();
             closeModal('importModal'); showToast("已更新列表 (錄音已重置)");
         }
