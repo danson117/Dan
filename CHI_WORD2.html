@@ -1,367 +1,369 @@
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>中英閃卡 v3.22 (隱藏文字+即時朗讀版)</title>
-    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;900&family=Noto+Serif+HK:wght@500;700;900&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg-primary: #e0f7fa;
-            --bg-secondary: #ffffff;
-            --text-primary: #37474f;
-            --text-secondary: #78909c;
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>中英閃卡 v3.23 (iPad修復+強力模糊版)</title>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;900&family=Noto+Serif+HK:wght@500;700;900&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg-primary: #e0f7fa;
+    --bg-secondary: #ffffff;
+    --text-primary: #37474f;
+    --text-secondary: #78909c;
 
-            --accent: #ff7043;
-            --btn-speak: #42a5f5;
-            --btn-record: #ef5350;
-            --btn-pause: #ffca28;
-            --btn-pause-text: #37474f;
-            --btn-master: #66bb6a;
-            --danger: #ef5350;
-            --import-btn: #fdd835;
-            --reset-btn: #78909c;
+    --accent: #ff7043;
+    --btn-speak: #42a5f5;
+    --btn-record: #ef5350;
+    --btn-pause: #ffca28;
+    --btn-pause-text: #37474f;
+    --btn-master: #66bb6a;
+    --danger: #ef5350;
+    --import-btn: #fdd835;
+    --reset-btn: #78909c;
 
-            --card-border: #b2ebf2;
-            --font-ui: 'M PLUS Rounded 1c', sans-serif;
-            --font-learn-zh: 'Kaiti TC', 'STKaiti', 'BiaoKai', 'Noto Serif HK', serif;
-            --font-learn-en: 'Nunito', sans-serif;
+    --card-border: #b2ebf2;
+    --font-ui: 'M PLUS Rounded 1c', sans-serif;
+    --font-learn-zh: 'Kaiti TC', 'STKaiti', 'BiaoKai', 'Noto Serif HK', serif;
+    --font-learn-en: 'Nunito', sans-serif;
 
-            --progress-color: #c8e6c9;
-        }
+    --progress-color: #c8e6c9;
+}
 
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
 
-        body {
-            font-family: var(--font-ui);
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            height: 100vh;
-            height: 100dvh;
-            overflow: hidden;
-            padding: 15px;
-            padding-top: max(15px, env(safe-area-inset-top));
-            display: flex;
-            flex-direction: column;
-        }
+body {
+    font-family: var(--font-ui);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    height: 100vh;
+    height: 100dvh; /* 針對支援 dvh 的新版 iOS */
+    overflow: hidden;
+    padding: 15px;
+    padding-top: max(15px, env(safe-area-inset-top));
+    display: flex;
+    flex-direction: column;
+}
 
-        /* --- 隱藏文字模式 CSS --- */
-        body.hide-text-mode .word-display,
-        body.hide-text-mode .word-tag span,
-        body.hide-text-mode .word-tag i {
-            filter: blur(20px);
-            opacity: 0.5;
-            transition: filter 0.3s ease;
-            user-select: none;
-            pointer-events: none; /* 防止選取文字 */
-        }
-        /* 讓編輯模式時仍然看得到，避免操作困難，或者你可以選擇也隱藏 */
-        body.hide-text-mode .grid-input {
-            filter: blur(10px);
-        }
-        /* --- 結束 --- */
+/* --- 強力隱藏文字模式 CSS (修改部分) --- */
+body.hide-text-mode .word-display {
+    filter: blur(70px); /* 模糊度大幅增加 */
+    opacity: 0.3;       /* 降低透明度，變成一團霧 */
+    transition: filter 0.3s ease;
+    user-select: none;
+    pointer-events: none;
+    transform: scale(0.8); /* 稍微縮小，避免模糊邊緣溢出太多 */
+}
 
-        /* --- 佈局系統 --- */
-        .main-layout {
-            display: flex; gap: 20px; height: 100%; width: 100%;
-            position: relative; z-index: 10;
-            overflow: hidden;
-        }
+body.hide-text-mode .word-tag span,
+body.hide-text-mode .word-tag i {
+    filter: blur(15px); /* 列表的小字模糊度 */
+    opacity: 0.4;
+    pointer-events: none;
+}
+/* --- 結束 --- */
 
-        .sidebar {
-            flex: 0 0 380px;
-            display: flex; flex-direction: column; gap: 10px;
-            height: 100%;
-            min-height: 0;
-        }
+/* --- 佈局系統 --- */
+.main-layout {
+    display: flex; gap: 20px; height: 100%; width: 100%;
+    position: relative; z-index: 10;
+    overflow: hidden;
+}
 
-        .learning-area {
-            flex: 1; display: flex; flex-direction: column; align-items: center;
-            justify-content: center; height: 100%; position: relative;
-            background: rgba(255,255,255,0.3); border-radius: 24px; padding: 10px;
-            min-width: 0;
-        }
+.sidebar {
+    flex: 0 0 380px;
+    display: flex; flex-direction: column; gap: 10px;
+    height: 100%;
+    min-height: 0;
+}
 
-        .panel {
-            background: var(--bg-secondary);
-            border-radius: 16px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 2px solid var(--card-border);
-            display: flex; flex-direction: column;
-            overflow: hidden;
-        }
+.learning-area {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; height: 100%; position: relative;
+    background: rgba(255,255,255,0.3); border-radius: 24px; padding: 10px;
+    min-width: 0;
+}
 
-        .panel-header {
-            padding: 8px 12px; background: #fff; z-index: 5;
-            border-bottom: 1px solid #eee; flex-shrink: 0;
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .panel-body {
-            flex: 1; overflow-y: auto; padding: 8px;
-            min-height: 0;
-            -webkit-overflow-scrolling: touch;
-        }
+.panel {
+    background: var(--bg-secondary);
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 2px solid var(--card-border);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+}
 
-        .panel-words { flex: 3; min-height: 0; }
-        .panel-review { flex: 2; border-color: #ffe0b2; background-color: #fff3e0; min-height: 0; }
-        .panel-review .panel-header { background-color: #fff3e0; border-bottom-color: #ffe0b2; }
+.panel-header {
+    padding: 8px 12px; background: #fff; z-index: 5;
+    border-bottom: 1px solid #eee; flex-shrink: 0;
+    display: flex; justify-content: space-between; align-items: center;
+}
+.panel-body {
+    flex: 1; overflow-y: auto; padding: 8px;
+    min-height: 0;
+    -webkit-overflow-scrolling: touch;
+}
 
-        .panel-mastered { flex: 2; border-color: #a5d6a7; background-color: #f1f8e9; min-height: 0; }
-        .panel-mastered .panel-header { background-color: #f1f8e9; border-bottom-color: #dcedc8; }
+.panel-words { flex: 3; min-height: 0; }
+.panel-review { flex: 2; border-color: #ffe0b2; background-color: #fff3e0; min-height: 0; }
+.panel-review .panel-header { background-color: #fff3e0; border-bottom-color: #ffe0b2; }
 
-        .panel-title {
-            font-size: 1.0rem; color: var(--text-primary); font-weight: 800;
-            display: flex; justify-content: space-between; align-items: center; width: 100%;
-        }
+.panel-mastered { flex: 2; border-color: #a5d6a7; background-color: #f1f8e9; min-height: 0; }
+.panel-mastered .panel-header { background-color: #f1f8e9; border-bottom-color: #dcedc8; }
 
-        .word-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(55px, 1fr));
-            gap: 4px;
-            align-content: start;
-            width: 100%;
-        }
+.panel-title {
+    font-size: 1.0rem; color: var(--text-primary); font-weight: 800;
+    display: flex; justify-content: space-between; align-items: center; width: 100%;
+}
 
-        .word-tag {
-            background: #f5f5f5; aspect-ratio: 1 / 1; border-radius: 12px;
-            border: 2px solid transparent; cursor: pointer; position: relative;
-            transition: transform 0.1s, border-color 0.2s;
-            display: flex; align-items: center; justify-content: center;
-            text-align: center; font-family: var(--font-learn-zh);
-            color: #333; font-weight: bold; padding: 2px; overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-        .word-tag:active { transform: scale(0.95); }
-        .word-tag.active { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255, 112, 67, 0.3); z-index: 2; }
+.word-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(55px, 1fr));
+    gap: 4px;
+    align-content: start;
+    width: 100%;
+}
 
-        .has-audio-dot {
-            position: absolute; top: 4px; right: 4px; width: 8px; height: 8px;
-            background-color: var(--btn-record); border-radius: 50%; z-index: 3;
-            box-shadow: 0 0 2px rgba(0,0,0,0.3); border: 1px solid white;
-        }
+.word-tag {
+    background: #f5f5f5; aspect-ratio: 1 / 1; border-radius: 12px;
+    border: 2px solid transparent; cursor: pointer; position: relative;
+    transition: transform 0.1s, border-color 0.2s;
+    display: flex; align-items: center; justify-content: center;
+    text-align: center; font-family: var(--font-learn-zh);
+    color: #333; font-weight: bold; padding: 2px; overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+.word-tag:active { transform: scale(0.95); }
+.word-tag.active { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255, 112, 67, 0.3); z-index: 2; }
 
-        .word-tag-bg {
-            position: absolute; bottom: 0; left: 0; width: 100%; background: var(--progress-color);
-            z-index: 0; transition: height 0.5s ease; opacity: 0.6; pointer-events: none;
-        }
+.has-audio-dot {
+    position: absolute; top: 4px; right: 4px; width: 8px; height: 8px;
+    background-color: var(--btn-record); border-radius: 50%; z-index: 3;
+    box-shadow: 0 0 2px rgba(0,0,0,0.3); border: 1px solid white;
+}
 
-        .word-tag-content { position: relative; z-index: 1; width: 100%; pointer-events: none; }
-        .word-tag span { line-height: 1.1; width: 100%; display: block; }
+.word-tag-bg {
+    position: absolute; bottom: 0; left: 0; width: 100%; background: var(--progress-color);
+    z-index: 0; transition: height 0.5s ease; opacity: 0.6; pointer-events: none;
+}
 
-        .len-1 span, .len-2 span { font-size: 1.2rem; }
-        .len-3 span { font-size: 0.8rem; }
-        .len-4 span { font-size: 0.9rem; display: flex; flex-direction: column; }
-        .len-4 span i { font-style: normal; width: 100%; display: block; line-height: 1.0; }
-        .len-long span { font-size: 0.7rem; word-break: break-word; }
+.word-tag-content { position: relative; z-index: 1; width: 100%; pointer-events: none; }
+.word-tag span { line-height: 1.1; width: 100%; display: block; }
 
-        .is-english { font-family: var(--font-learn-en) !important; }
-        .is-english.len-1 span, .is-english.len-2 span { font-size: 1.0rem; }
-        .is-english.len-long span { font-size: 0.6rem; }
+.len-1 span, .len-2 span { font-size: 1.2rem; }
+.len-3 span { font-size: 0.8rem; }
+.len-4 span { font-size: 0.9rem; display: flex; flex-direction: column; }
+.len-4 span i { font-style: normal; width: 100%; display: block; line-height: 1.0; }
+.len-long span { font-size: 0.7rem; word-break: break-word; }
 
-        .view-count {
-            position: absolute; bottom: 1px; left: 3px; font-size: 0.55rem;
-            color: #78909c; font-family: var(--font-ui); font-weight: 700; z-index: 2;
-        }
+.is-english { font-family: var(--font-learn-en) !important; }
+.is-english.len-1 span, .is-english.len-2 span { font-size: 1.0rem; }
+.is-english.len-long span { font-size: 0.6rem; }
 
-        .add-tag {
-            background: #eceff1; color: #90a4ae; font-size: 2.5rem; border: 2px dashed #cfd8dc;
-        }
-        .grid-input {
-            width: 100%; height: 100%; border: none; background: #fff;
-            text-align: center; font-size: 1.2rem; font-family: var(--font-learn-zh);
-            outline: none; border-radius: 10px; color: var(--text-primary); padding: 0;
-        }
+.view-count {
+    position: absolute; bottom: 1px; left: 3px; font-size: 0.55rem;
+    color: #78909c; font-family: var(--font-ui); font-weight: 700; z-index: 2;
+}
 
-        .progress-container { width: 100%; max-width: 500px; margin-bottom: 10px; text-align: center; flex-shrink: 0; }
-        .progress-bar { height: 8px; background: #eceff1; border-radius: 10px; overflow: hidden; }
-        .progress-fill { height: 100%; background: linear-gradient(90deg, #ffca28, #ffa000); transition: width 0.3s; }
-        .progress-text { font-size: 0.9rem; font-weight: bold; color: var(--text-secondary); margin-top: 5px; }
+.add-tag {
+    background: #eceff1; color: #90a4ae; font-size: 2.5rem; border: 2px dashed #cfd8dc;
+}
+.grid-input {
+    width: 100%; height: 100%; border: none; background: #fff;
+    text-align: center; font-size: 1.2rem; font-family: var(--font-learn-zh);
+    outline: none; border-radius: 10px; color: var(--text-primary); padding: 0;
+}
 
-        .flashcard {
-            background: rgba(255, 255, 255, 0.95);
-            width: 100%; max-width: 700px; flex: 1; max-height: 50vh;
-            border-radius: 24px; border: 4px solid var(--card-border);
-            box-shadow: 0 8px 0 rgba(0,0,0,0.05);
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            margin-bottom: 15px; position: relative; z-index: 20;
-            min-height: 150px;
-        }
+.progress-container { width: 100%; max-width: 500px; margin-bottom: 10px; text-align: center; flex-shrink: 0; }
+.progress-bar { height: 8px; background: #eceff1; border-radius: 10px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, #ffca28, #ffa000); transition: width 0.3s; }
+.progress-text { font-size: 0.9rem; font-weight: bold; color: var(--text-secondary); margin-top: 5px; }
 
-        .word-display {
-            font-size: 8rem; font-weight: 700; color: var(--text-primary);
-            text-align: center; line-height: 1.2; font-family: var(--font-learn-zh);
-            padding: 10px; width: 100%; word-break: break-word;
-        }
-        .word-display.en-font { font-family: var(--font-learn-en); font-weight: 800; }
+.flashcard {
+    background: rgba(255, 255, 255, 0.95);
+    width: 100%; max-width: 700px; flex: 1; max-height: 50vh;
+    border-radius: 24px; border: 4px solid var(--card-border);
+    box-shadow: 0 8px 0 rgba(0,0,0,0.05);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    margin-bottom: 15px; position: relative; z-index: 20;
+    min-height: 150px;
+}
 
-        .status-badge {
-            position: absolute; top: 15px; padding: 6px 16px; border-radius: 20px;
-            font-weight: bold; font-size: 1.2rem; opacity: 0; transition: opacity 0.2s; pointer-events: none;
-        }
-        .status-waiting { background: #fff9c4; color: #f9a825; opacity: 1; border: 2px solid #fff59d; }
-        .status-reading { background: #e3f2fd; color: #1565c0; opacity: 1; border: 2px solid #bbdefb; }
-        .status-recording { background: #ffebee; color: #c62828; opacity: 1; border: 2px solid #ffcdd2; animation: pulse 1.5s infinite; }
-        .status-paused { background: #ffe0b2; color: #e65100; opacity: 1; border: 2px solid #ffcc80; }
+.word-display {
+    font-size: 8rem; font-weight: 700; color: var(--text-primary);
+    text-align: center; line-height: 1.2; font-family: var(--font-learn-zh);
+    padding: 10px; width: 100%; word-break: break-word;
+}
+.word-display.en-font { font-family: var(--font-learn-en); font-weight: 800; }
 
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+.status-badge {
+    position: absolute; top: 15px; padding: 6px 16px; border-radius: 20px;
+    font-weight: bold; font-size: 1.2rem; opacity: 0; transition: opacity 0.2s; pointer-events: none;
+}
+.status-waiting { background: #fff9c4; color: #f9a825; opacity: 1; border: 2px solid #fff59d; }
+.status-reading { background: #e3f2fd; color: #1565c0; opacity: 1; border: 2px solid #bbdefb; }
+.status-recording { background: #ffebee; color: #c62828; opacity: 1; border: 2px solid #ffcdd2; animation: pulse 1.5s infinite; }
+.status-paused { background: #ffe0b2; color: #e65100; opacity: 1; border: 2px solid #ffcc80; }
 
-        .card-info-bl {
-            position: absolute; bottom: 20px; left: 25px;
-            font-size: 2rem;
-            color: #90a4ae; font-weight: 800;
-            display: flex; align-items: center; gap: 5px;
-            text-shadow: 1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff;
-        }
-        .card-info-br {
-            position: absolute; bottom: 20px; right: 25px;
-            font-size: 2rem;
-            color: #90a4ae; font-weight: 800;
-            display: flex; align-items: center; gap: 5px;
-            text-shadow: 1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff;
-        }
+@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
-        .controls-grid {
-            display: grid; grid-template-columns: 1fr 0.4fr 1fr; gap: 10px;
-            width: 100%; max-width: 600px; z-index: 20; flex-shrink: 0;
-        }
+.card-info-bl {
+    position: absolute; bottom: 20px; left: 25px;
+    font-size: 2rem;
+    color: #90a4ae; font-weight: 800;
+    display: flex; align-items: center; gap: 5px;
+    text-shadow: 1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff;
+}
+.card-info-br {
+    position: absolute; bottom: 20px; right: 25px;
+    font-size: 2rem;
+    color: #90a4ae; font-weight: 800;
+    display: flex; align-items: center; gap: 5px;
+    text-shadow: 1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff;
+}
 
-        .big-btn {
-            border: none; padding: 14px; border-radius: 18px; font-size: 1.1rem;
-            font-weight: 800; cursor: pointer; color: white;
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-            transition: all 0.1s; position: relative; top: 0;
-            font-family: var(--font-ui); box-shadow: 0 5px 0 rgba(0,0,0,0.15);
-        }
-        .big-btn:active { top: 5px; box-shadow: none !important; }
-        .big-btn:disabled { background: #cfd8dc !important; box-shadow: none !important; color: #fff; cursor: not-allowed; top: 0; }
+.controls-grid {
+    display: grid; grid-template-columns: 1fr 0.4fr 1fr; gap: 10px;
+    width: 100%; max-width: 600px; z-index: 20; flex-shrink: 0;
+}
 
-        .btn-speak { background: var(--btn-speak); box-shadow: 0 5px 0 #1e88e5; }
-        .btn-speak.paused { background: var(--btn-pause); box-shadow: 0 5px 0 #ffb300; color: var(--btn-pause-text); }
+.big-btn {
+    border: none; padding: 14px; border-radius: 18px; font-size: 1.1rem;
+    font-weight: 800; cursor: pointer; color: white;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: all 0.1s; position: relative; top: 0;
+    font-family: var(--font-ui); box-shadow: 0 5px 0 rgba(0,0,0,0.15);
+}
+.big-btn:active { top: 5px; box-shadow: none !important; }
+.big-btn:disabled { background: #cfd8dc !important; box-shadow: none !important; color: #fff; cursor: not-allowed; top: 0; }
 
-        .btn-record { background: var(--btn-record); box-shadow: 0 5px 0 #c62828; font-size: 1.5rem; }
-        .btn-record.recording { background: #b71c1c; box-shadow: inset 0 0 10px rgba(0,0,0,0.3); top: 5px; }
+.btn-speak { background: var(--btn-speak); box-shadow: 0 5px 0 #1e88e5; }
+.btn-speak.paused { background: var(--btn-pause); box-shadow: 0 5px 0 #ffb300; color: var(--btn-pause-text); }
 
-        .btn-master { background: var(--btn-master); box-shadow: 0 5px 0 #43a047; }
+.btn-record { background: var(--btn-record); box-shadow: 0 5px 0 #c62828; font-size: 1.5rem; }
+.btn-record.recording { background: #b71c1c; box-shadow: inset 0 0 10px rgba(0,0,0,0.3); top: 5px; }
 
-        .nav-row {
-            display: flex; gap: 15px; width: 100%; max-width: 600px; margin-top: 10px;
-        }
-        .nav-btn {
-            flex: 1; background: #fff; color: var(--text-primary); border: 2px solid #cfd8dc;
-            box-shadow: 0 5px 0 #b0bec5; font-size: 1rem; padding: 10px;
-        }
+.btn-master { background: var(--btn-master); box-shadow: 0 5px 0 #43a047; }
 
-        .toggles-area {
-            margin-top: 10px; display: flex; gap: 15px; background: rgba(255,255,255,0.6);
-            padding: 8px 20px; border-radius: 16px; flex-wrap: wrap; justify-content: center; flex-shrink: 0;
-        }
-        .toggle-item { display: flex; align-items: center; gap: 6px; font-weight: bold; font-size: 0.9rem; cursor: pointer; }
-        .toggle-item input { accent-color: var(--accent); width: 20px; height: 20px; }
+.nav-row {
+    display: flex; gap: 15px; width: 100%; max-width: 600px; margin-top: 10px;
+}
+.nav-btn {
+    flex: 1; background: #fff; color: var(--text-primary); border: 2px solid #cfd8dc;
+    box-shadow: 0 5px 0 #b0bec5; font-size: 1rem; padding: 10px;
+}
 
-        .parents-bar {
-            margin-top: auto; display: flex; gap: 10px; justify-content: center; padding-top: 10px; flex-shrink: 0;
-        }
-        .mini-btn {
-            padding: 10px 14px; font-size: 0.85rem; border-radius: 10px; border: 1px solid #cfd8dc;
-            background: #fff; cursor: pointer; font-weight: bold; color: #546e7a;
-        }
+.toggles-area {
+    margin-top: 10px; display: flex; gap: 15px; background: rgba(255,255,255,0.6);
+    padding: 8px 20px; border-radius: 16px; flex-wrap: wrap; justify-content: center; flex-shrink: 0;
+}
+.toggle-item { display: flex; align-items: center; gap: 6px; font-weight: bold; font-size: 0.9rem; cursor: pointer; }
+.toggle-item input { accent-color: var(--accent); width: 20px; height: 20px; }
 
-        .save-status {
-            position: fixed; bottom: 10px; right: 10px; font-size: 0.75rem;
-            background: rgba(255,255,255,0.9); padding: 6px 12px; border-radius: 20px;
-            color: #78909c; font-weight: bold; pointer-events: none; z-index: 1000;
-            display: flex; align-items: center; gap: 6px; opacity: 0; transition: opacity 0.3s;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #eceff1;
-        }
+.parents-bar {
+    margin-top: auto; display: flex; gap: 10px; justify-content: center; padding-top: 10px; flex-shrink: 0;
+}
+.mini-btn {
+    padding: 10px 14px; font-size: 0.85rem; border-radius: 10px; border: 1px solid #cfd8dc;
+    background: #fff; cursor: pointer; font-weight: bold; color: #546e7a;
+}
 
-        /* Modal */
-        .custom-modal {
-            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
-            z-index: 3000; align-items: center; justify-content: center; backdrop-filter: blur(4px);
-        }
-        .modal-content {
-            background: white; width: 90%; max-width: 500px; border-radius: 24px;
-            padding: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.25);
-            text-align: center; display: flex; flex-direction: column; max-height: 85vh;
-            overflow-y: auto;
-        }
+.save-status {
+    position: fixed; bottom: 10px; right: 10px; font-size: 0.75rem;
+    background: rgba(255,255,255,0.9); padding: 6px 12px; border-radius: 20px;
+    color: #78909c; font-weight: bold; pointer-events: none; z-index: 1000;
+    display: flex; align-items: center; gap: 6px; opacity: 0; transition: opacity 0.3s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #eceff1;
+}
 
-        .import-textarea {
-            width: 100%; height: 30vh;
-            border: 2px solid #cfd8dc; border-radius: 12px;
-            padding: 15px; font-size: 1.1rem; resize: none; font-family: var(--font-ui);
-            margin: 10px 0;
-        }
+/* Modal */
+.custom-modal {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+    z-index: 3000; align-items: center; justify-content: center; backdrop-filter: blur(4px);
+}
+.modal-content {
+    background: white; width: 90%; max-width: 500px; border-radius: 24px;
+    padding: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+    text-align: center; display: flex; flex-direction: column; max-height: 85vh;
+    overflow-y: auto;
+}
 
-        .modal-actions { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
-        .modal-btn { flex: 1; padding: 12px; border-radius: 10px; border: none; font-weight: bold; font-size: 0.95rem; cursor: pointer; white-space: nowrap;}
-        .btn-save { background: var(--accent); color: white; }
-        .btn-paste { background: var(--import-btn); color: #333; }
-        .btn-no { background: #eceff1; color: #455a64; }
+.import-textarea {
+    width: 100%; height: 30vh;
+    border: 2px solid #cfd8dc; border-radius: 12px;
+    padding: 15px; font-size: 1.1rem; resize: none; font-family: var(--font-ui);
+    margin: 10px 0;
+}
 
-        /* New Settings Grid */
-        .settings-grid {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;
-        }
-        .btn-setting-action {
-            width: 100%; padding: 15px 5px; border-radius: 12px; border: none;
-            font-weight: bold; font-size: 0.9rem; cursor: pointer; color: white;
-            display: flex; flex-direction: column; align-items: center; gap: 5px;
-        }
+.modal-actions { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+.modal-btn { flex: 1; padding: 12px; border-radius: 10px; border: none; font-weight: bold; font-size: 0.95rem; cursor: pointer; white-space: nowrap;}
+.btn-save { background: var(--accent); color: white; }
+.btn-paste { background: var(--import-btn); color: #333; }
+.btn-no { background: #eceff1; color: #455a64; }
 
-        .setting-row {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 15px; text-align: left; border-bottom: 1px solid #eee; padding-bottom: 10px;
-            flex-wrap: wrap; gap: 5px;
-        }
-        .setting-label { flex: 1; padding-right: 10px; font-size: 0.95rem; font-weight: bold; color: #546e7a; min-width: 150px; }
-        .setting-input { width: 80px; padding: 8px; border-radius: 10px; border: 1px solid #cfd8dc; text-align: center; font-size: 1.1rem; }
-        .setting-input:focus { border-color: var(--accent); outline: none; background: #fff3e0; }
+/* New Settings Grid */
+.settings-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;
+}
+.btn-setting-action {
+    width: 100%; padding: 15px 5px; border-radius: 12px; border: none;
+    font-weight: bold; font-size: 0.9rem; cursor: pointer; color: white;
+    display: flex; flex-direction: column; align-items: center; gap: 5px;
+}
 
-        .toast {
-            position: fixed;
-            top: 15%;
-            left: 50%;
-            transform: translate(-50%, 0);
-            background: rgba(0,0,0,0.85); color: white; padding: 16px 30px;
-            border-radius: 40px; font-weight: bold; font-size: 1.1rem;
-            z-index: 4000; opacity: 0; pointer-events: none;
-            transition: opacity 0.3s; text-align: center;
-            width: max-content; max-width: 90%;
-        }
+.setting-row {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 15px; text-align: left; border-bottom: 1px solid #eee; padding-bottom: 10px;
+    flex-wrap: wrap; gap: 5px;
+}
+.setting-label { flex: 1; padding-right: 10px; font-size: 0.95rem; font-weight: bold; color: #546e7a; min-width: 150px; }
+.setting-input { width: 80px; padding: 8px; border-radius: 10px; border: 1px solid #cfd8dc; text-align: center; font-size: 1.1rem; }
+.setting-input:focus { border-color: var(--accent); outline: none; background: #fff3e0; }
 
-        .select-mode-active .panel-words { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) inset; }
-        .delete-mode-active .panel-mastered { border-color: var(--danger); box-shadow: 0 0 0 2px var(--danger) inset; }
-        .review-mode-active .panel-review { border-color: #ff9800; box-shadow: 0 0 0 2px #ff9800 inset; }
+.toast {
+    position: fixed;
+    top: 15%;
+    left: 50%;
+    transform: translate(-50%, 0);
+    background: rgba(0,0,0,0.85); color: white; padding: 16px 30px;
+    border-radius: 40px; font-weight: bold; font-size: 1.1rem;
+    z-index: 4000; opacity: 0; pointer-events: none;
+    transition: opacity 0.3s; text-align: center;
+    width: max-content; max-width: 90%;
+}
 
-        .select-checkbox {
-            position: absolute; top: 2px; right: 2px; width: 22px; height: 22px;
-            z-index: 10; cursor: pointer;
-        }
-        .select-mode-active .word-tag, .delete-mode-active .word-tag, .review-mode-active .word-tag { cursor: default; }
+.select-mode-active .panel-words { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) inset; }
+.delete-mode-active .panel-mastered { border-color: var(--danger); box-shadow: 0 0 0 2px var(--danger) inset; }
+.review-mode-active .panel-review { border-color: #ff9800; box-shadow: 0 0 0 2px #ff9800 inset; }
 
-        .mode-controls { display: none; gap: 5px; align-items: center; }
-        .mode-btn { padding: 4px 8px; border-radius: 6px; border: none; font-size: 0.7rem; font-weight: bold; cursor: pointer; color: white; }
+.select-checkbox {
+    position: absolute; top: 2px; right: 2px; width: 22px; height: 22px;
+    z-index: 10; cursor: pointer;
+}
+.select-mode-active .word-tag, .delete-mode-active .word-tag, .review-mode-active .word-tag { cursor: default; }
 
-        #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2500; }
+.mode-controls { display: none; gap: 5px; align-items: center; }
+.mode-btn { padding: 4px 8px; border-radius: 6px; border: none; font-size: 0.7rem; font-weight: bold; cursor: pointer; color: white; }
 
-        @media (orientation: portrait) {
-            .main-layout { flex-direction: column; gap: 10px; }
-            .sidebar { flex: none; height: 50%; width: 100%; }
-            .learning-area { height: 50%; border-radius: 24px 24px 0 0; }
-            .word-grid { grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); }
-            .flashcard { max-height: 30vh; }
-            .word-display { font-size: 6rem; }
-            .controls-grid { margin-bottom: 5px; }
-            .card-info-bl, .card-info-br { font-size: 1.5rem; bottom: 10px; }
-        }
+#confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2500; }
 
-        @media (max-width: 600px) {
-            .word-display { font-size: 4rem; }
-            .big-btn { font-size: 0.9rem; padding: 10px; }
-            .sidebar { height: 45%; }
-            .learning-area { height: 55%; }
-        }
-    </style>
+@media (orientation: portrait) {
+    .main-layout { flex-direction: column; gap: 10px; }
+    .sidebar { flex: none; height: 50%; width: 100%; }
+    .learning-area { height: 50%; border-radius: 24px 24px 0 0; }
+    .word-grid { grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); }
+    .flashcard { max-height: 30vh; }
+    .word-display { font-size: 6rem; }
+    .controls-grid { margin-bottom: 5px; }
+    .card-info-bl, .card-info-br { font-size: 1.5rem; bottom: 10px; }
+}
+
+@media (max-width: 600px) {
+    .word-display { font-size: 4rem; }
+    .big-btn { font-size: 0.9rem; padding: 10px; }
+    .sidebar { height: 45%; }
+    .learning-area { height: 55%; }
+}
+</style>
 </head>
 <body>
 
@@ -462,7 +464,6 @@
             </div>
 
             <div class="nav-row">
-                <!-- 修改：按鈕點擊改為呼叫 manualPrev/manualNext -->
                 <button class="big-btn nav-btn" id="prevBtn" onclick="manualPrev()">👈 上一個</button>
                 <button class="big-btn nav-btn" id="nextBtn" onclick="manualNext()">下一個 👉</button>
             </div>
@@ -480,7 +481,6 @@
                     <input type="checkbox" id="randomOrder">
                     🔀 洗牌模式
                 </label>
-                <!-- 新增：隱藏文字開關 -->
                 <label class="toggle-item">
                     <input type="checkbox" id="hideTextMode">
                     🙈 隱藏文字
@@ -531,7 +531,6 @@
                 <input type="number" id="settingMasteryViewLimit" class="setting-input" value="1" min="1" max="50" onchange="autoSaveSettings()" onfocus="this.select()">
             </div>
 
-            <!-- 2x2 Grid for Reset Actions -->
             <div class="settings-grid">
                 <button class="btn-setting-action" style="background:#5c6bc0;" onclick="confirmAction('resetStats')">
                     <span>📊 重置統計</span>
@@ -573,6 +572,13 @@
     </div>
 
     <script>
+        // 全局錯誤捕獲，防止 iPad 白屏
+        window.onerror = function(msg, url, lineNo, columnNo, error) {
+            console.error("Global Error:", msg, error);
+            // 只有在嚴重錯誤時才 alert，避免干擾
+            return false;
+        };
+
         let words = [];
         let reviewWords = [];
         let masteredWords = [];
@@ -618,87 +624,51 @@
         };
 
         // --- IndexedDB 系統 ---
-        const DB_NAME = 'FlashcardDB_v3.20';
+        // 更新 DB 名稱以避免舊緩存衝突，這是 iPad 常見問題
+        const DB_NAME = 'FlashcardDB_v3.23';
         const DB_VERSION = 1;
         let db = null;
         let isDirty = false;
         let saveTimeout = null;
 
-        // --- Autoplay / TTS 解鎖（解決第一次倒數完冇聲） ---
         let mediaUnlocked = false;
         let unlocking = false;
 
         function makeSilentWavBlob(durationMs = 120, sampleRate = 44100) {
             const numSamples = Math.floor(sampleRate * (durationMs / 1000));
-            const bytesPerSample = 2;
-            const numChannels = 1;
-            const blockAlign = numChannels * bytesPerSample;
-            const byteRate = sampleRate * blockAlign;
-            const dataSize = numSamples * blockAlign;
-            const buffer = new ArrayBuffer(44 + dataSize);
+            const buffer = new ArrayBuffer(44 + numSamples * 2);
             const view = new DataView(buffer);
-
-            function writeString(offset, str) {
-                for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
-            }
-
-            writeString(0, 'RIFF');
-            view.setUint32(4, 36 + dataSize, true);
-            writeString(8, 'WAVE');
-            writeString(12, 'fmt ');
-            view.setUint32(16, 16, true);
-            view.setUint16(20, 1, true);
-            view.setUint16(22, numChannels, true);
-            view.setUint32(24, sampleRate, true);
-            view.setUint32(28, byteRate, true);
-            view.setUint16(32, blockAlign, true);
-            view.setUint16(34, 16, true);
-            writeString(36, 'data');
-            view.setUint32(40, dataSize, true);
-
-            // data already zero (silence)
+            // 簡化 WAV header 寫入
+            const writeString = (o, s) => { for (let i=0; i<s.length; i++) view.setUint8(o+i, s.charCodeAt(i)); };
+            writeString(0, 'RIFF'); view.setUint32(4, 36 + numSamples*2, true); writeString(8, 'WAVE');
+            writeString(12, 'fmt '); view.setUint32(16, 16, true); view.setUint16(20, 1, true);
+            view.setUint16(22, 1, true); view.setUint32(24, sampleRate, true); view.setUint32(28, sampleRate*2, true);
+            view.setUint16(32, 2, true); view.setUint16(34, 16, true); writeString(36, 'data');
+            view.setUint32(40, numSamples*2, true);
             return new Blob([buffer], { type: 'audio/wav' });
         }
 
         async function unlockAudioAndSpeech() {
             if (mediaUnlocked || unlocking) return;
             unlocking = true;
-
             try {
-                // 1) prime speechSynthesis (某啲 iOS 要先講一次先肯之後自動播)
                 if ('speechSynthesis' in window) {
-                    try {
-                        window.speechSynthesis.cancel();
-                        const u = new SpeechSynthesisUtterance(' ');
-                        u.lang = 'en-US';
-                        u.volume = 0; // 靜音
-                        window.speechSynthesis.speak(u);
-                        // 快速 cancel，純粹解鎖
-                        await new Promise(r => setTimeout(r, 80));
-                        window.speechSynthesis.cancel();
-                    } catch (e) {
-                        console.warn('prime TTS failed', e);
-                    }
+                    window.speechSynthesis.cancel();
+                    const u = new SpeechSynthesisUtterance(' ');
+                    u.volume = 0;
+                    window.speechSynthesis.speak(u);
                 }
-
-                // 2) prime HTMLAudio autoplay
-                try {
-                    const silent = makeSilentWavBlob(120);
-                    const url = URL.createObjectURL(silent);
-                    globalAudioPlayer.muted = true;
-                    globalAudioPlayer.src = url;
-                    globalAudioPlayer.load();
-                    const p = globalAudioPlayer.play();
-                    if (p && p.catch) await p.catch(() => {});
-                    globalAudioPlayer.pause();
-                    globalAudioPlayer.currentTime = 0;
-                    globalAudioPlayer.muted = false;
-                    URL.revokeObjectURL(url);
-                } catch (e) {
-                    console.warn('prime audio failed', e);
-                }
-
+                const silent = makeSilentWavBlob(120);
+                const url = URL.createObjectURL(silent);
+                globalAudioPlayer.muted = true;
+                globalAudioPlayer.src = url;
+                await globalAudioPlayer.play().catch(() => {});
+                globalAudioPlayer.pause();
+                globalAudioPlayer.muted = false;
+                URL.revokeObjectURL(url);
                 mediaUnlocked = true;
+            } catch (e) {
+                console.warn('Unlock failed', e);
             } finally {
                 unlocking = false;
             }
@@ -718,45 +688,53 @@
 
         function initDB() {
             return new Promise((resolve, reject) => {
-                const request = indexedDB.open(DB_NAME, DB_VERSION);
-                request.onerror = (event) => { console.error("Database error", event); reject(event.target.error); };
-                request.onupgradeneeded = (event) => {
-                    const db = event.target.result;
-                    if (!db.objectStoreNames.contains('data')) db.createObjectStore('data', { keyPath: 'id' });
-                };
-                request.onsuccess = (event) => { db = event.target.result; resolve(db); };
+                try {
+                    const request = indexedDB.open(DB_NAME, DB_VERSION);
+                    request.onerror = (event) => { 
+                        console.error("DB Open Error", event); 
+                        reject("DB_OPEN_FAIL"); 
+                    };
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target.result;
+                        if (!db.objectStoreNames.contains('data')) db.createObjectStore('data', { keyPath: 'id' });
+                    };
+                    request.onsuccess = (event) => { db = event.target.result; resolve(db); };
+                } catch (e) {
+                    reject(e);
+                }
             });
         }
 
         async function loadDataFromDB() {
             if (!db) return false;
             return new Promise((resolve) => {
-                const transaction = db.transaction(['data'], 'readonly');
-                const store = transaction.objectStore('data');
-                const getWords = store.get('words');
-                const getReview = store.get('review');
-                const getMastered = store.get('mastered');
-                const getSettings = store.get('settings');
+                try {
+                    const transaction = db.transaction(['data'], 'readonly');
+                    const store = transaction.objectStore('data');
+                    const getWords = store.get('words');
+                    const getReview = store.get('review');
+                    const getMastered = store.get('mastered');
+                    const getSettings = store.get('settings');
 
-                transaction.oncomplete = () => {
-                    if (getWords.result) words = getWords.result.value;
-                    else words = initialWords.map(w => ({ text: w, views: 0, hits: 0, audioBlob: null, roundId: 0 }));
+                    transaction.oncomplete = () => {
+                        if (getWords.result) words = getWords.result.value;
+                        else words = [...initialWords].map(w => ({ text: w, views: 0, hits: 0, audioBlob: null, roundId: 0 }));
 
-                    if (getReview.result) reviewWords = getReview.result.value;
-                    else reviewWords = initialReview.map(w => ({ text: w, views: 0, hits: 0, audioBlob: null, roundId: 0 }));
+                        if (getReview.result) reviewWords = getReview.result.value;
+                        else reviewWords = [...initialReview].map(w => ({ text: w, views: 0, hits: 0, audioBlob: null, roundId: 0 }));
 
-                    if (getMastered.result) masteredWords = getMastered.result.value;
-                    else masteredWords = initialMastered.map(w => ({ text: w, views: 0, hits: 0, audioBlob: null, roundId: 0 }));
+                        if (getMastered.result) masteredWords = getMastered.result.value;
+                        else masteredWords = [...initialMastered].map(w => ({ text: w, views: 0, hits: 0, audioBlob: null, roundId: 0 }));
 
-                    if (getSettings.result) {
-                        settings = { ...settings, ...getSettings.result.value };
-                    }
-
-                    // 初始化 Round ID，確保舊數據兼容
-                    words.forEach(w => { if (typeof w.roundId !== 'number') w.roundId = 0; });
-                    resolve(true);
-                };
-                transaction.onerror = () => resolve(false);
+                        if (getSettings.result) settings = { ...settings, ...getSettings.result.value };
+                        
+                        words.forEach(w => { if (typeof w.roundId !== 'number') w.roundId = 0; });
+                        resolve(true);
+                    };
+                    transaction.onerror = () => resolve(false);
+                } catch(e) {
+                    resolve(false);
+                }
             });
         }
 
@@ -765,17 +743,17 @@
             if (saveTimeout) clearTimeout(saveTimeout);
             updateSaveStatus('saving');
             saveTimeout = setTimeout(() => {
-                const transaction = db.transaction(['data'], 'readwrite');
-                const store = transaction.objectStore('data');
                 try {
+                    const transaction = db.transaction(['data'], 'readwrite');
+                    const store = transaction.objectStore('data');
                     store.put({ id: 'words', value: words });
                     store.put({ id: 'review', value: reviewWords });
                     store.put({ id: 'mastered', value: masteredWords });
                     store.put({ id: 'settings', value: settings });
                     transaction.oncomplete = () => { updateSaveStatus('saved'); isDirty = false; };
-                    transaction.onerror = (e) => { console.error("Save Error:", e); updateSaveStatus('error'); };
+                    transaction.onerror = () => updateSaveStatus('error');
                 } catch (e) {
-                    console.error("Transaction Error:", e); updateSaveStatus('error');
+                    updateSaveStatus('error');
                 }
             }, 1000);
         }
@@ -788,24 +766,31 @@
                 el.textContent = '☁️ 已儲存'; el.style.color = '#4caf50';
                 setTimeout(() => { if(!isDirty) el.style.opacity = 0; }, 2000);
             }
-            else if (status === 'error') { el.textContent = '⚠️ 儲存失敗'; el.style.color = '#f44336'; }
+            else if (status === 'error') { el.textContent = '⚠️ 無法儲存 (隱私模式?)'; el.style.color = '#f44336'; }
         }
 
         function markDirty() { isDirty = true; updateSaveStatus('saving'); saveDataToDB(); }
 
-        // --- 初始化 ---
+        // --- 初始化 (iPad 修復核心) ---
         async function init() {
             initGestureUnlock();
 
+            // 1. 嘗試載入 DB
             try {
                 await initDB();
                 await loadDataFromDB();
                 updateSaveStatus('saved');
             } catch (e) {
-                console.error("DB Init failed", e);
-                alert("無法啟動資料庫，您的進度可能無法儲存。");
+                console.warn("DB Init failed, falling back to memory mode", e);
+                // iPad 失敗後，使用初始數據，確保畫面不會白屏
+                words = initialWords.map(w => ({ text: w, views: 0, hits: 0, audioBlob: null, roundId: 0 }));
+                reviewWords = initialReview.map(w => ({ text: w, views: 0, hits: 0, audioBlob: null, roundId: 0 }));
+                masteredWords = initialMastered.map(w => ({ text: w, views: 0, hits: 0, audioBlob: null, roundId: 0 }));
+                updateSaveStatus('error');
+                showToast("注意：無法存取資料庫 (可能在隱私模式)，進度不會儲存");
             }
 
+            // 2. 無論 DB 是否成功，都要渲染畫面
             renderLists();
             updateCard();
 
@@ -814,48 +799,41 @@
                 loadVoices();
             }
 
-            // 自動模式：改成 async，先解鎖 media 再開始
             document.getElementById('autoPlayNext').addEventListener('change', async (e) => {
                 stopEverything();
-
                 if (!e.target.checked) return;
-
                 await unlockAudioAndSpeech();
-
                 if (words.length === 0) return;
-
-                // 如果洗牌模式，啟動自動前先 pick 一張（確保 roundId 同狀態一致）
                 if (document.getElementById('randomOrder').checked) {
-                    currentIndex = pickNextIndexRandom(/*allowSameAsCurrent*/ true);
+                    currentIndex = pickNextIndexRandom(true);
                     updateCard();
                 }
-
                 startSequence();
             });
 
-            // 切換洗牌模式：重置 round 狀態，避免「半輪」殘留
             document.getElementById('randomOrder').addEventListener('change', () => {
                 currentRoundId++;
                 words.forEach(w => w.roundId = 0);
-                // 開啟洗牌就即刻 pick 一張，關閉就保持 currentIndex
                 if (document.getElementById('randomOrder').checked && words.length > 0) {
                     currentIndex = pickNextIndexRandom(true);
                 }
                 updateCard();
             });
 
-            // 隱藏文字模式切換
             document.getElementById('hideTextMode').addEventListener('change', (e) => {
                 if(e.target.checked) document.body.classList.add('hide-text-mode');
                 else document.body.classList.remove('hide-text-mode');
             });
 
             const recBtn = document.getElementById('recordBtn');
-            recBtn.addEventListener('mousedown', (e) => { e.preventDefault(); startRecording(); });
-            recBtn.addEventListener('mouseup', (e) => { e.preventDefault(); stopRecording(); });
-            recBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startRecording(); });
-            recBtn.addEventListener('touchend', (e) => { e.preventDefault(); stopRecording(); });
-            recBtn.addEventListener('mouseleave', (e) => { if(isRecording) stopRecording(); });
+            const handleRecStart = (e) => { e.preventDefault(); startRecording(); };
+            const handleRecStop = (e) => { e.preventDefault(); stopRecording(); };
+            
+            recBtn.addEventListener('mousedown', handleRecStart);
+            recBtn.addEventListener('mouseup', handleRecStop);
+            recBtn.addEventListener('touchstart', handleRecStart);
+            recBtn.addEventListener('touchend', handleRecStop);
+            recBtn.addEventListener('mouseleave', () => { if(isRecording) stopRecording(); });
 
             window.onbeforeunload = function () { if (isDirty) { return "您有未儲存的變更"; } };
         }
@@ -863,48 +841,29 @@
         function loadVoices() {
             availableVoices = window.speechSynthesis.getVoices();
             if (availableVoices.length === 0) return;
-
-            cantoneseVoice = availableVoices.find(v => v.lang === 'zh-HK' && v.name.includes('Google')) ||
-                             availableVoices.find(v => v.lang === 'zh-HK');
-
-            englishVoice = availableVoices.find(v => v.name.includes('Moira')) ||
-                           availableVoices.find(v => v.lang === 'en-IE') ||
-                           availableVoices.find(v => v.lang === 'en-GB' && v.name.includes('Female')) ||
-                           availableVoices.find(v => v.lang === 'en-GB');
+            cantoneseVoice = availableVoices.find(v => v.lang === 'zh-HK' && v.name.includes('Google')) || availableVoices.find(v => v.lang === 'zh-HK');
+            englishVoice = availableVoices.find(v => v.name.includes('Moira')) || availableVoices.find(v => v.lang === 'en-IE') || availableVoices.find(v => v.lang === 'en-GB');
         }
 
-        function isEnglish(text) {
-            return /^[A-Za-z0-9\s\.,\?!'"]+$/.test(text);
-        }
+        function isEnglish(text) { return /^[A-Za-z0-9\s\.,\?!'"]+$/.test(text); }
 
-        // --- 洗牌：唯一入口（徹底穩定） ---
         function pickNextIndexRandom(allowSameAsCurrent = false) {
             if (words.length === 0) return 0;
-
-            // 候選：本 round 未讀過
             let candidates = [];
             for (let i = 0; i < words.length; i++) {
                 if (words[i].roundId !== currentRoundId) candidates.push(i);
             }
-
-            // 如果本 round 全部讀過 → 開新 round
             if (candidates.length === 0) {
                 currentRoundId++;
                 candidates = [];
                 for (let i = 0; i < words.length; i++) candidates.push(i);
             }
-
-            // optional：避免「啱啱嗰張」再抽中（尤其你 auto start 或手動 next）
             if (!allowSameAsCurrent && words.length > 1) {
                 candidates = candidates.filter(i => i !== currentIndex);
-                if (candidates.length === 0) {
-                    // 如果過濾後冇得揀（例如只得一張），就照用全部
-                    candidates = [currentIndex];
-                }
+                if (candidates.length === 0) candidates = [currentIndex];
             }
-
             const idx = candidates[Math.floor(Math.random() * candidates.length)];
-            words[idx].roundId = currentRoundId; // **重要：揀中即刻標記**
+            words[idx].roundId = currentRoundId;
             return idx;
         }
 
@@ -912,55 +871,43 @@
             if (document.getElementById('autoPlayNext').checked) startSequence();
         }
 
-        // 這是自動模式用的「下一個」邏輯，會觸發倒數
         function advanceNextForAuto() {
             if (words.length === 0) return;
-            // 注意：這裡不 stopEverything，因為是由 handleSpeakEnd 觸發的
-            
-            if (document.getElementById('randomOrder').checked) {
-                currentIndex = pickNextIndexRandom(false);
-            } else {
-                currentIndex = (currentIndex + 1) % words.length;
-            }
-
+            if (document.getElementById('randomOrder').checked) currentIndex = pickNextIndexRandom(false);
+            else currentIndex = (currentIndex + 1) % words.length;
             updateCard();
-            startAutoIfEnabled(); // 這裡會進入倒數
+            startAutoIfEnabled();
         }
 
-        // --- 手動導航邏輯 (新功能：手動按會即刻讀) ---
         async function manualNext() {
             if (words.length === 0) return;
-            await unlockAudioAndSpeech(); // 確保聲音解鎖
-            stopEverything(); // 手動介入，停止所有自動計時
-
-            if (document.getElementById('randomOrder').checked) {
-                currentIndex = pickNextIndexRandom(false);
-            } else {
-                currentIndex = (currentIndex + 1) % words.length;
-            }
-
+            await unlockAudioAndSpeech();
+            stopEverything();
+            if (document.getElementById('randomOrder').checked) currentIndex = pickNextIndexRandom(false);
+            else currentIndex = (currentIndex + 1) % words.length;
             updateCard();
-            speakWordFlow(); // **關鍵：忽略倒數，立即朗讀**
+            speakWordFlow();
         }
 
         async function manualPrev() {
             if (words.length === 0) return;
             await unlockAudioAndSpeech();
             stopEverything();
-
             currentIndex = (currentIndex - 1 + words.length) % words.length;
             updateCard();
-            speakWordFlow(); // **關鍵：忽略倒數，立即朗讀**
+            speakWordFlow();
         }
 
-        // --- 錄音功能 ---
         function startRecording() {
             if (words.length === 0) return;
             if (isRecording) return;
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                alert("⚠️ 錄音功能無法啟動！請確保使用 HTTPS 或 Localhost。");
+            
+            // iPad 安全檢查
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) {
+                alert("⚠️ 您的裝置或瀏覽器不支援錄音 (或未授權)。");
                 return;
             }
+
             window.speechSynthesis.cancel();
             stopEverything();
 
@@ -974,7 +921,6 @@
 
                 audioChunks = [];
                 mediaRecorder.ondataavailable = event => { if (event.data.size > 0) audioChunks.push(event.data); };
-
                 mediaRecorder.onstop = () => {
                     const blobType = mediaRecorder.mimeType || 'audio/webm';
                     const audioBlob = new Blob(audioChunks, { type: blobType });
@@ -982,7 +928,6 @@
                     showToast("錄音已保存！");
                     markDirty(); renderLists();
                 };
-
                 mediaRecorder.start();
                 isRecording = true;
                 document.getElementById('recordBtn').classList.add('recording');
@@ -1005,7 +950,7 @@
             isRecording = false;
             clearInterval(recordingTimerInterval);
             document.getElementById('recordBtn').classList.remove('recording');
-            mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            if (mediaRecorder.stream) mediaRecorder.stream.getTracks().forEach(track => track.stop());
             updateStatusUI();
         }
 
@@ -1022,9 +967,7 @@
 
         async function toggleSpeak() {
             if (words.length === 0) return;
-
             await unlockAudioAndSpeech();
-
             if (state.status === 'paused') resumeFlow();
             else if (state.status === 'countdown' || state.status === 'speaking') pauseFlow();
             else {
@@ -1056,9 +999,7 @@
             globalAudioPlayer.pause();
             clearTimeout(state.timerId);
             clearInterval(state.timerId);
-
             if (words.length === 0) return;
-
             state.repeatCount = 0;
             runCountdown(settings.autoDelay, "試下自己讀", () => {
                 setTimeout(() => speakWordFlow(), 0);
@@ -1084,51 +1025,35 @@
 
         function speakWordFlow() {
             if (words.length === 0) return;
-
             state.status = 'speaking';
             state.countdownCallback = null;
             updateStatusUI();
-
             if (state.repeatCount === 0) {
                 words[currentIndex].views++;
                 markDirty(); renderLists(); updateCard();
             }
-
             const currentItem = words[currentIndex];
-
             window.speechSynthesis.cancel();
             globalAudioPlayer.pause();
             globalAudioPlayer.currentTime = 0;
-
             clearTimeout(state.watchdogId);
-            state.watchdogId = setTimeout(() => {
-                console.warn("Audio/TTS timeout watchdog triggered");
-                handleSpeakEnd();
-            }, 10000);
+            state.watchdogId = setTimeout(() => { console.warn("Audio/TTS timeout"); handleSpeakEnd(); }, 10000);
 
             if (currentItem.audioBlob) {
                 const audioUrl = URL.createObjectURL(currentItem.audioBlob);
                 globalAudioPlayer.src = audioUrl;
                 globalAudioPlayer.load();
                 globalAudioPlayer.volume = 1.0;
-
-                globalAudioPlayer.onended = () => {
-                    handleSpeakEnd();
-                    URL.revokeObjectURL(audioUrl);
-                };
-
+                globalAudioPlayer.onended = () => { handleSpeakEnd(); URL.revokeObjectURL(audioUrl); };
                 setTimeout(() => {
                     const playPromise = globalAudioPlayer.play();
                     if (playPromise !== undefined) {
                         playPromise.catch(error => {
-                            console.error("播放錄音失敗:", error);
-                            // 如果錄音播放失敗，嘗試 TTS
                             if (state.repeatCount === 0) speakTTS(currentItem.text);
                             else handleSpeakEnd();
                         });
                     }
                 }, 50);
-
             } else {
                 speakTTS(currentItem.text);
             }
@@ -1136,7 +1061,6 @@
 
         function speakTTS(text) {
             const u = new SpeechSynthesisUtterance(text);
-
             if (isEnglish(text)) {
                 u.lang = 'en-IE';
                 if (englishVoice) u.voice = englishVoice;
@@ -1146,21 +1070,15 @@
                 if (cantoneseVoice) u.voice = cantoneseVoice;
                 u.rate = 0.8;
             }
-
             u.onend = () => handleSpeakEnd();
-            u.onerror = (e) => {
-                console.error("TTS Error", e);
-                handleSpeakEnd();
-            };
+            u.onerror = () => handleSpeakEnd();
             window.speechSynthesis.speak(u);
         }
 
         function handleSpeakEnd() {
             clearTimeout(state.watchdogId);
             if (state.status === 'paused') return;
-
             const repeatThree = document.getElementById('repeatThreeTimes').checked;
-
             if (repeatThree && state.repeatCount < 2) {
                 state.repeatCount++;
                 runCountdown(settings.repeatDelay, `準備再讀 (${state.repeatCount}/2)`, () => { speakWordFlow(); });
@@ -1168,11 +1086,8 @@
                 state.status = 'idle';
                 state.repeatCount = 0;
                 updateStatusUI();
-
                 if (document.getElementById('autoPlayNext').checked) {
-                    state.timerId = setTimeout(() => {
-                        advanceNextForAuto(); // 自動模式使用倒數邏輯
-                    }, 500);
+                    state.timerId = setTimeout(() => { advanceNextForAuto(); }, 500);
                 }
             }
         }
@@ -1182,7 +1097,6 @@
             const btn = document.getElementById('speakBtn');
             badge.className = 'status-badge';
             badge.style.opacity = '0';
-
             if (state.status === 'paused') {
                 btn.innerHTML = "▶️ 繼續"; btn.classList.add('paused');
                 badge.textContent = `⏸ 已暫停`; badge.classList.add('status-paused'); badge.style.opacity = '1';
@@ -1201,11 +1115,9 @@
             const wordList = document.getElementById('wordList');
             const reviewList = document.getElementById('reviewList');
             const mList = document.getElementById('masteredList');
-
             document.getElementById('wordCount').textContent = `(${words.length})`;
             document.getElementById('reviewCount').textContent = `(${reviewWords.length})`;
             document.getElementById('masteredCount').textContent = `(${masteredWords.length})`;
-
             wordList.innerHTML = ''; reviewList.innerHTML = ''; mList.innerHTML = '';
 
             words.forEach((item, index) => {
@@ -1230,41 +1142,32 @@
             const div = document.createElement('div');
             div.className = 'word-tag';
             const word = item.text;
-
             const pct = Math.min(100, (item.hits / settings.masteryThreshold) * 100);
             const bg = document.createElement('div');
             bg.className = 'word-tag-bg';
             bg.style.height = `${pct}%`;
             div.appendChild(bg);
-
             if (item.audioBlob) {
                 const dot = document.createElement('div');
                 dot.className = 'has-audio-dot';
                 div.appendChild(dot);
             }
-
             const content = document.createElement('div');
             content.className = 'word-tag-content';
-
             if (isEnglish(word)) div.classList.add('is-english');
-
             const len = word.length;
             if (len <= 2) div.classList.add('len-2');
             else if (len === 3) div.classList.add('len-3');
             else if (len === 4) div.classList.add('len-4');
             else div.classList.add('len-long');
-
             content.innerHTML = len === 4 && !isEnglish(word)
                 ? `<span><i>${word.substring(0,2)}</i><i>${word.substring(2,4)}</i></span>`
                 : `<span>${word}</span>`;
-
             div.appendChild(content);
-
             const viewCount = document.createElement('div');
             viewCount.className = 'view-count';
             viewCount.textContent = item.views;
             div.appendChild(viewCount);
-
             handleInteraction(div, index, item, type);
             return div;
         }
@@ -1293,7 +1196,6 @@
             if (type === 'word') isModeActive = isWordSelectMode;
             if (type === 'review') isModeActive = isReviewMode;
             if (type === 'mastered') isModeActive = isDeleteMode;
-
             if (isModeActive) {
                 const checkbox = document.createElement('input');
                 checkbox.type = 'checkbox'; checkbox.className = 'select-checkbox'; checkbox.dataset.index = index;
@@ -1304,7 +1206,6 @@
                     div.onclick = () => {
                         if (state.status === 'idle' || state.status === 'paused') {
                             currentIndex = index;
-                            // random 模式：點選都算「本輪已見」→ updateCard 會自動標記 roundId
                             updateCard();
                         }
                     };
@@ -1391,19 +1292,10 @@
             }
 
             if (currentIndex >= words.length) currentIndex = 0;
-
             document.getElementById('speakBtn').disabled = false; document.getElementById('recordBtn').disabled = false; document.getElementById('masteredBtn').disabled = false;
-
             const item = words[currentIndex];
-
-            // **關鍵：random 模式下，任何成為 current 的卡都即刻標記本輪已見**
-            if (isRandom && item.roundId !== currentRoundId) {
-                item.roundId = currentRoundId;
-                // roundId 唔一定要落 DB（純 run-time 亦得），但而家保留現狀：唔 markDirty，避免頻繁寫入
-            }
-
+            if (isRandom && item.roundId !== currentRoundId) item.roundId = currentRoundId;
             display.textContent = item.text;
-
             if (isEnglish(item.text)) {
                 display.classList.add('en-font');
                 display.style.fontSize = item.text.length > 8 ? "4rem" : "6rem";
@@ -1411,7 +1303,6 @@
                 display.classList.remove('en-font');
                 display.style.fontSize = item.text.length > 3 ? "5rem" : "8rem";
             }
-
             if (isRandom) {
                 const remainingInRound = words.filter(w => w.roundId !== currentRoundId).length;
                 progressFill.style.width = '100%';
@@ -1421,7 +1312,6 @@
                 progressFill.style.width = `${pct}%`;
                 progressText.textContent = `${currentIndex + 1} / ${words.length}`;
             }
-
             viewCountDisplay.textContent = `👂 ${item.views}`;
             masteryDisplay.textContent = `🎯 ${item.hits}/${settings.masteryThreshold}`;
             renderLists();
@@ -1430,14 +1320,10 @@
         function handleMasteryClick(e) {
             if (words.length === 0) return;
             stopEverything();
-
             const item = words[currentIndex];
             item.hits++;
-
             if (item.hits >= settings.masteryThreshold) {
-                // 真正學識：先移走
                 words.splice(currentIndex, 1);
-
                 if (item.views > settings.masteryViewLimit) {
                     reviewWords.push(item);
                     showToast(`👍 識咗，但要多練下「${item.text}」`);
@@ -1446,28 +1332,20 @@
                     showToast(`🎉 太棒了！輕鬆學識「${item.text}」`);
                     triggerConfetti(null, null, 1.0);
                 }
-
                 if (currentIndex >= words.length) currentIndex = 0;
-
                 markDirty(); renderLists();
-
-                // **修正：random + auto 亦必須先 pick 下一張，再 startSequence**
                 if (words.length > 0) {
-                    if (document.getElementById('randomOrder').checked) {
-                        currentIndex = pickNextIndexRandom(true);
-                    }
+                    if (document.getElementById('randomOrder').checked) currentIndex = pickNextIndexRandom(true);
                     updateCard();
                     startAutoIfEnabled();
                 } else {
                     updateCard();
                 }
-
             } else {
-                // 未完全學識：即刻跳下一張（你要求嘅行為）
                 const rect = e.target.getBoundingClientRect();
                 triggerConfetti(rect.left + rect.width / 2, rect.top + rect.height / 2, 0.4);
                 markDirty(); renderLists(); updateCard();
-                manualNext(); // 這裡也使用手動邏輯，即刻跳+讀
+                manualNext();
             }
         }
 
@@ -1487,16 +1365,12 @@
             markDirty(); updateCard(); showToast("設定已更新");
         }
 
-        // --- 統一確認操作邏輯 ---
         let pendingAction = null;
-
         function confirmAction(actionType) {
             pendingAction = actionType;
             const msgEl = document.getElementById('confirmMessage');
             const btnEl = document.getElementById('confirmBtn');
-
             document.getElementById('confirmModal').style.display = 'flex';
-
             if (actionType === 'resetStats') {
                 msgEl.textContent = "確定要將所有詞語的聽讀次數和熟練度歸零嗎？";
                 btnEl.className = "modal-btn btn-save"; btnEl.style.background = "#5c6bc0";
@@ -1514,7 +1388,6 @@
 
         document.getElementById('confirmBtn').onclick = () => {
             if (!pendingAction) return;
-
             if (pendingAction === 'resetStats') {
                 words.forEach(w => { w.views = 0; w.hits = 0; });
                 reviewWords.forEach(w => { w.views = 0; w.hits = 0; });
@@ -1537,7 +1410,6 @@
                 markDirty(); renderLists(); updateCard();
                 closeModal('settingsModal'); showToast("所有資料已清空");
             }
-
             closeModal('confirmModal');
             pendingAction = null;
         };
