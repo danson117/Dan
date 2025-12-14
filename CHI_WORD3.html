@@ -3,428 +3,448 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Flashcard & Spelling Pro (Ultimate)</title>
+<title>Spelling Pro & Flashcards (Enhanced)</title>
 <style>
-:root { --primary: #4f46e5; --secondary: #10b981; --bg: #f3f4f6; --card-bg: #ffffff; --text: #1f2937; --accent: #f59e0b; }
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-/* Layout */
-header { background: var(--card-bg); padding: 10px 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; z-index: 10; }
-h1 { margin: 0; font-size: 1.2rem; color: var(--primary); display: flex; align-items: center; gap: 5px; }
-.mode-switch { display: flex; background: #e5e7eb; border-radius: 20px; padding: 2px; }
-.mode-btn { border: none; background: none; padding: 5px 12px; border-radius: 18px; font-size: 0.85rem; cursor: pointer; transition: 0.3s; color: #6b7280; }
-.mode-btn.active { background: var(--primary); color: white; shadow: 0 2px 5px rgba(0,0,0,0.1); }
-main { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; align-items: center; }
-/* Cards & Containers */
-.card-container { background: var(--card-bg); border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); width: 100%; max-width: 500px; padding: 20px; margin-bottom: 20px; transition: transform 0.2s; }
-.setup-box { width: 100%; max-width: 500px; display: flex; flex-direction: column; gap: 15px; }
-textarea { width: 100%; height: 120px; padding: 12px; border: 2px solid #e5e7eb; border-radius: 12px; font-size: 1rem; resize: vertical; transition: border 0.3s; }
-textarea:focus { border-color: var(--primary); outline: none; }
-/* Buttons */
-.btn { border: none; padding: 12px 20px; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; }
-.btn:active { transform: scale(0.98); }
-.btn-primary { background: var(--primary); color: white; }
-.btn-secondary { background: var(--secondary); color: white; }
-.btn-accent { background: var(--accent); color: white; }
-.btn-outline { background: transparent; border: 2px solid #e5e7eb; color: #6b7280; }
-.btn-group { display: flex; gap: 10px; }
-.btn-sm { padding: 6px 12px; font-size: 0.85rem; width: auto; }
-/* Flashcard Specific */
-.flashcard { height: 250px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; cursor: pointer; position: relative; perspective: 1000px; }
-.word-display { font-size: 2.5rem; font-weight: 700; color: var(--text); margin-bottom: 10px; }
-.phonetic { font-size: 1.2rem; color: #6b7280; }
-.card-actions { display: flex; justify-content: space-between; margin-top: 20px; gap: 10px; }
-/* Spelling Pro Specific */
-.spelling-area { text-align: center; }
-.spelling-input { font-size: 1.5rem; text-align: center; border: none; border-bottom: 3px solid var(--primary); background: transparent; width: 80%; padding: 10px; margin: 20px 0; outline: none; }
-.spelling-feedback { height: 30px; font-weight: bold; margin-bottom: 10px; }
-.correct { color: var(--secondary); } .wrong { color: #ef4444; }
-/* Settings & Toggles */
-.settings-panel { background: #f9fafb; padding: 15px; border-radius: 12px; font-size: 0.9rem; }
-.setting-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-.setting-row:last-child { margin-bottom: 0; }
-input[type="range"] { width: 100px; }
-/* Dictation Specific Styles */
-.dictation-tools { display: flex; gap: 8px; margin-bottom: 5px; }
-.checkbox-wrapper { display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500; color: var(--primary); background: #e0e7ff; padding: 8px 12px; border-radius: 8px; width: fit-content; }
-.checkbox-wrapper input { width: 18px; height: 18px; cursor: pointer; }
-/* Modal */
-.modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(3px); }
-.modal-content { background: white; padding: 25px; border-radius: 16px; width: 90%; max-width: 400px; max-height: 80vh; overflow-y: auto; }
-/* Confetti */
-canvas#confetti { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 999; }
+:root{--primary:#4a90e2;--bg:#f4f7f6;--card:#fff;--text:#333;--accent:#ff6b6b;--green:#2ecc71;}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);margin:0;padding:0;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+header{background:var(--primary);color:#fff;padding:15px;text-align:center;box-shadow:0 2px 5px rgba(0,0,0,0.1);flex-shrink:0;z-index:10}
+h1{margin:0;font-size:1.2rem;font-weight:600}
+.tabs{display:flex;justify-content:center;margin-top:10px}
+.tab{padding:8px 16px;margin:0 5px;background:rgba(255,255,255,0.2);border-radius:20px;font-size:0.9rem;cursor:pointer;transition:0.3s}
+.tab.active{background:#fff;color:var(--primary);font-weight:bold}
+#main-container{flex:1;position:relative;overflow:hidden}
+.view{position:absolute;top:0;left:0;width:100%;height:100%;overflow-y:auto;padding:20px;display:none;flex-direction:column;align-items:center}
+.view.active{display:flex}
+/* Card Styles */
+.card-stack{position:relative;width:100%;max-width:400px;height:300px;margin:20px auto;perspective:1000px}
+.flashcard{position:absolute;width:100%;height:100%;background:var(--card);border-radius:15px;box-shadow:0 4px 15px rgba(0,0,0,0.1);display:flex;flex-direction:column;justify-content:center;align-items:center;transition:transform 0.5s,opacity 0.5s;backface-visibility:hidden;padding:20px;text-align:center;cursor:pointer}
+.flashcard.flipped{transform:rotateY(180deg)}
+.card-face{position:absolute;width:100%;height:100%;backface-visibility:hidden;display:flex;flex-direction:column;justify-content:center;align-items:center;border-radius:15px}
+.card-back{transform:rotateY(180deg);background:#fdfdfd}
+.word-text{font-size:2.5rem;font-weight:bold;margin-bottom:10px;color:var(--primary)}
+.sentence-text{font-size:1rem;color:#666;margin-top:10px;font-style:italic;}
+.card-controls{margin-top:20px;display:flex;gap:15px}
+button{background:var(--primary);color:#fff;border:none;padding:12px 24px;border-radius:50px;font-size:1rem;cursor:pointer;box-shadow:0 2px 5px rgba(0,0,0,0.2);transition:transform 0.1s}
+button:active{transform:scale(0.95)}
+button.secondary{background:#fff;color:var(--text);border:1px solid #ddd}
+button.danger{background:var(--accent)}
+button.success{background:var(--green)}
+textarea{width:100%;max-width:500px;height:150px;padding:10px;border:1px solid #ddd;border-radius:8px;margin-bottom:10px;font-size:16px}
+/* Spelling Mode */
+.spelling-box{background:#fff;padding:20px;border-radius:15px;width:100%;max-width:500px;box-shadow:0 4px 10px rgba(0,0,0,0.05);text-align:center}
+.input-group{margin:20px 0;position:relative}
+.input-group input{width:100%;padding:15px;font-size:1.2rem;border:2px solid #eee;border-radius:10px;text-align:center;outline:none;transition:0.3s}
+.input-group input:focus{border-color:var(--primary)}
+.feedback{height:20px;font-size:0.9rem;margin-top:5px;font-weight:bold}
+.feedback.correct{color:var(--green)}
+.feedback.wrong{color:var(--accent)}
+.progress-bar{width:100%;height:6px;background:#eee;border-radius:3px;margin:15px 0;overflow:hidden}
+.progress-fill{height:100%;background:var(--green);width:0%;transition:width 0.3s}
+.confetti{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:100}
+/* Settings */
+.settings-panel{background:#fff;padding:15px;border-radius:10px;margin-bottom:15px;width:100%;max-width:500px}
+.setting-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #eee}
+.setting-row:last-child{border-bottom:none}
+input[type="checkbox"]{transform:scale(1.3)}
+/* Mic */
+.mic-btn{font-size:1.5rem;width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:10px auto;background:#f0f0f0;color:#555}
+.mic-btn.listening{background:var(--accent);color:#fff;animation:pulse 1.5s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,107,107,0.4)}70%{box-shadow:0 0 0 15px rgba(255,107,107,0)}}
+/* Curtain */
+.curtain{position:fixed;top:0;left:0;width:100%;height:100%;background:#000;z-index:999;display:none;color:#333;display:flex;align-items:center;justify-content:center;flex-direction:column}
+.curtain.active{display:flex}
+.curtain-hole{width:200px;height:80px;background:transparent;border:2000px solid #000;position:absolute;transform:translate(-50%,-50%);top:50%;left:50%;pointer-events:none}
+.curtain-text{color:#444;font-size:1.5rem;z-index:1000;margin-top:150px;font-weight:bold}
 </style>
 </head>
 <body>
 
 <header>
-    <h1>📚 識字寶</h1>
-    <div class="mode-switch">
-        <button class="mode-btn active" onclick="switchMode('flashcard')">認字卡</button>
-        <button class="mode-btn" onclick="switchMode('spelling')">默書</button>
+    <h1>Spelling Pro & Cards</h1>
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('flashcard')">字卡</div>
+        <div class="tab" onclick="switchTab('spelling')">默書</div>
+        <div class="tab" onclick="switchTab('edit')">編輯</div>
     </div>
-    <button class="btn-sm btn-outline" onclick="openSettings()">⚙️</button>
 </header>
 
-<main id="app-container">
-    <!-- 這裡的內容會由 JS 動態生成 -->
-</main>
+<div id="main-container">
+    <!-- FLASHCARD VIEW -->
+    <div id="view-flashcard" class="view active">
+        <div class="card-stack" onclick="flipCard()">
+            <div class="flashcard" id="current-card">
+                <div class="card-face card-front">
+                    <div class="word-text" id="fc-word">Ready?</div>
+                    <div style="font-size:0.8rem;color:#999">(點擊翻轉)</div>
+                </div>
+                <div class="card-face card-back">
+                    <div class="word-text" id="fc-back-word">Ready?</div>
+                    <div class="sentence-text" id="fc-sentence"></div>
+                    <button class="mic-btn" onclick="event.stopPropagation();speakCurrent(true)">🔊</button>
+                </div>
+            </div>
+        </div>
+        <div class="card-controls">
+            <button class="danger" onclick="markWord(false)">還要練 😫</button>
+            <button class="success" onclick="markWord(true)">識背了 😎</button>
+        </div>
+        <div style="margin-top:20px;color:#888" id="fc-progress">0 / 0</div>
+    </div>
 
-<!-- Settings Modal -->
-<div id="settings-modal" class="modal" onclick="if(event.target===this) closeSettings()">
-    <div class="modal-content">
-        <h2>⚙️ 設定</h2>
-        <div class="setting-row">
-            <label>廣東話聲音</label>
-            <select id="voice-zh" onchange="saveSettings()"></select>
+    <!-- SPELLING VIEW -->
+    <div id="view-spelling" class="view">
+        <div class="settings-panel">
+            <div class="setting-row">
+                <span>朗讀例句 (Read Example)</span>
+                <input type="checkbox" id="opt-example" checked>
+            </div>
+            <div class="setting-row">
+                <span>讀出標點 (Speak Punctuation)</span>
+                <input type="checkbox" id="opt-punctuation">
+            </div>
+            <div class="setting-row">
+                <span>讀三次 (Read 3x)</span>
+                <input type="checkbox" id="opt-repeat">
+            </div>
+            <div class="setting-row">
+                <span>偷睇模式 (Curtain)</span>
+                <input type="checkbox" id="opt-curtain">
+            </div>
         </div>
-        <div class="setting-row">
-            <label>英文聲音</label>
-            <select id="voice-en" onchange="saveSettings()"></select>
+
+        <div class="spelling-box" id="spelling-ui" style="display:none">
+            <div class="progress-bar"><div class="progress-fill" id="sp-bar"></div></div>
+            <button class="mic-btn" onclick="speakCurrent(false)">🔊</button>
+            <div class="input-group">
+                <input type="text" id="sp-input" placeholder="輸入單字..." autocomplete="off" onkeyup="checkSpelling(event)">
+                <div class="feedback" id="sp-feedback"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between">
+                <button class="secondary" onclick="giveHint()">提示 💡</button>
+                <button onclick="checkAnswer()">提交 ✅</button>
+            </div>
         </div>
-        <div class="setting-row">
-            <label>語速 (Speed)</label>
-            <input type="range" id="voice-rate" min="0.5" max="1.5" step="0.1" value="0.8" oninput="document.getElementById('rate-val').innerText=this.value; saveSettings()">
-            <span id="rate-val">0.8</span>
+        <button id="btn-start-sp" class="success" style="padding:15px 40px;font-size:1.2rem" onclick="startSpelling()">開始默書</button>
+    </div>
+
+    <!-- EDIT VIEW -->
+    <div id="view-edit" class="view">
+        <h3>編輯生字庫</h3>
+        <p style="font-size:0.8rem;color:#666">格式：生字 | 例句 (每行一個)</p>
+        <textarea id="edit-area" placeholder="Apple | I like apples."></textarea>
+        <div class="card-controls">
+            <button onclick="saveWords()">儲存</button>
+            <button class="secondary" onclick="exportData()">導出</button>
+            <button class="secondary" onclick="importData()">導入</button>
         </div>
-        <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
-        <div class="setting-row">
-            <label>自動播放 (認字卡)</label>
-            <input type="checkbox" id="auto-play" onchange="saveSettings()">
+        <div style="margin-top:20px;text-align:left;width:100%;max-width:500px">
+            <h4>目前字庫:</h4>
+            <ul id="word-list-display" style="padding-left:20px;color:#555"></ul>
         </div>
-        <div class="setting-row">
-            <label>讀三次 (默書)</label>
-            <input type="checkbox" id="repeat-thrice" onchange="saveSettings()">
-        </div>
-        <button class="btn btn-primary" style="margin-top:20px" onclick="closeSettings()">完成</button>
     </div>
 </div>
 
-<canvas id="confetti"></canvas>
+<div id="curtain" class="curtain" onclick="toggleCurtain(false)">
+    <div class="curtain-hole"></div>
+    <div class="curtain-text">點擊畫面關閉偷睇</div>
+</div>
+
+<canvas id="confetti" class="confetti"></canvas>
 
 <script>
-// --- Data & State ---
-let db;
-let currentMode = 'flashcard'; // 'flashcard' or 'spelling'
-let words = []; // Current list of words/sentences
-let currentIndex = 0;
-let settings = { voiceZh: '', voiceEn: '', rate: 0.8, autoPlay: false, repeatThrice: false, readPunctuation: true };
-let synth = window.speechSynthesis;
-let voices = [];
+// --- DATA & STATE ---
+// 根據要求，預設加入 2句中文、2句英文，包含完整標點符號
+let rawWords = [
+    {w: "蘋果", s: "我喜歡吃蘋果，因為它很甜。"},
+    {w: "圖書館", s: "圖書館內請保持安靜；不要大聲喧嘩！"},
+    {w: "Apple", s: "An apple a day keeps the doctor away."},
+    {w: "Computer", s: "Can you turn on the computer, please?"}
+];
 
-// --- Initialization ---
-window.onload = async () => {
-    await initDB();
-    loadSettings();
-    populateVoices();
-    if (speechSynthesis.onvoiceschanged !== undefined) speechSynthesis.onvoiceschanged = populateVoices;
-    render();
+let studyQueue = [];
+let currentIndex = 0;
+let isSpelling = false;
+const synth = window.speechSynthesis;
+
+// --- PUNCTUATION LOGIC (FROM YOUR DEMO) ---
+const punctuationMap = {
+    "，": "逗號", "。": "句號", "？": "問號", "！": "感嘆號",
+    "、": "頓號", "；": "分號", "：": "冒號", "「": "開引號", "」": "關引號",
+    ",": "Comma", ".": "Full Stop", "?": "Question Mark", "!": "Exclamation Mark"
 };
 
-// --- IndexedDB ---
-function initDB() {
-    return new Promise((resolve) => {
-        const request = indexedDB.open("FlashcardDB", 1);
-        request.onupgradeneeded = e => {
-            let db = e.target.result;
-            if (!db.objectStoreNames.contains('history')) db.createObjectStore('history', { keyPath: 'id', autoIncrement: true });
-        };
-        request.onsuccess = e => { db = e.target.result; resolve(); };
-        request.onerror = () => resolve();
-    });
+function convertPunctuationToText(text) {
+    let processedText = text;
+    for (let symbol in punctuationMap) {
+        const textName = punctuationMap[symbol];
+        // 全域替換，並在前後加空格以確保停頓自然
+        processedText = processedText.split(symbol).join(` ${textName} `);
+    }
+    return processedText;
 }
 
-// --- Settings & Voices ---
-function populateVoices() {
-    voices = synth.getVoices();
-    const zhSelect = document.getElementById('voice-zh');
-    const enSelect = document.getElementById('voice-en');
-    zhSelect.innerHTML = enSelect.innerHTML = '';
+function generateSpeechText(item, settings) {
+    let textToSpeak = item.w; // 先讀生字
     
-    voices.forEach(v => {
-        const opt = new Option(`${v.name} (${v.lang})`, v.name);
-        if (v.lang.includes('zh') || v.lang.includes('HK') || v.lang.includes('CN')) zhSelect.add(opt.cloneNode(true));
-        if (v.lang.includes('en')) enSelect.add(opt.cloneNode(true));
-    });
-    
-    // Auto-select best voices if not set
-    if (!settings.voiceZh) selectBestVoice(zhSelect, ['HiuGaai', 'WanLung', 'Hong Kong', 'Chinese']);
-    if (!settings.voiceEn) selectBestVoice(enSelect, ['Natural', 'Google US', 'English']);
+    // 如果是默書模式且開啟了例句
+    if (settings.readExample && item.s) {
+        let sentenceContent = item.s;
+        if (settings.speakPunctuation) {
+            sentenceContent = convertPunctuationToText(sentenceContent);
+        }
+        // 生字 ... 例句
+        textToSpeak += " ... " + sentenceContent;
+    }
+    return textToSpeak;
 }
 
-function selectBestVoice(select, keywords) {
-    for (let k of keywords) {
-        for (let i=0; i<select.options.length; i++) {
-            if (select.options[i].text.includes(k)) { select.selectedIndex = i; settings[select.id === 'voice-zh' ? 'voiceZh' : 'voiceEn'] = select.value; return; }
+// --- CORE FUNCTIONS ---
+function init() {
+    loadFromStorage();
+    updateEditArea();
+    updateFlashcardUI();
+}
+
+function switchTab(tab) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('view-' + tab).classList.add('active');
+    document.querySelector(`.tab[onclick="switchTab('${tab}')"]`).classList.add('active');
+    if(tab === 'flashcard') updateFlashcardUI();
+}
+
+// --- FLASHCARD LOGIC ---
+function updateFlashcardUI() {
+    if (rawWords.length === 0) return;
+    const item = rawWords[currentIndex % rawWords.length];
+    document.getElementById('fc-word').innerText = item.w;
+    document.getElementById('fc-back-word').innerText = item.w;
+    document.getElementById('fc-sentence').innerText = item.s || "";
+    document.getElementById('current-card').classList.remove('flipped');
+    document.getElementById('fc-progress').innerText = `${(currentIndex % rawWords.length) + 1} / ${rawWords.length}`;
+}
+
+function flipCard() {
+    document.getElementById('current-card').classList.toggle('flipped');
+    // 翻到背面時自動讀一次 (不讀標點，只讀自然語句)
+    if(document.getElementById('current-card').classList.contains('flipped')) {
+        speakText(rawWords[currentIndex % rawWords.length].w); 
+    }
+}
+
+function markWord(known) {
+    // 簡單的循環邏輯
+    currentIndex++;
+    updateFlashcardUI();
+}
+
+// --- SPELLING LOGIC ---
+function startSpelling() {
+    if (rawWords.length === 0) { alert("請先加入生字！"); return; }
+    isSpelling = true;
+    studyQueue = [...rawWords].sort(() => Math.random() - 0.5); // Shuffle
+    currentIndex = 0;
+    
+    document.getElementById('btn-start-sp').style.display = 'none';
+    document.getElementById('spelling-ui').style.display = 'block';
+    
+    if(document.getElementById('opt-curtain').checked) toggleCurtain(true);
+    
+    loadNextSpelling();
+}
+
+function loadNextSpelling() {
+    if (currentIndex >= studyQueue.length) {
+        finishSpelling();
+        return;
+    }
+    document.getElementById('sp-input').value = '';
+    document.getElementById('sp-feedback').innerText = '';
+    document.getElementById('sp-input').focus();
+    updateProgressBar();
+    
+    // 延遲一點讀，讓UI先準備好
+    setTimeout(() => speakCurrent(false), 500);
+}
+
+function speakCurrent(forceSimple = false) {
+    if (rawWords.length === 0) return;
+    
+    let item = isSpelling ? studyQueue[currentIndex] : rawWords[currentIndex % rawWords.length];
+    
+    // 獲取設定
+    const settings = {
+        readExample: document.getElementById('opt-example').checked,
+        speakPunctuation: document.getElementById('opt-punctuation').checked
+    };
+
+    // 如果是強制簡單模式 (Flashcard背面) 或者沒有例句，就只讀字
+    let text = "";
+    if (forceSimple || !isSpelling) {
+        text = item.w;
+    } else {
+        // 使用你的邏輯生成文字
+        text = generateSpeechText(item, settings);
+    }
+
+    const u = new SpeechSynthesisUtterance(text);
+    // 簡單檢測語言
+    u.lang = /[\u4e00-\u9fa5]/.test(item.w) ? 'zh-HK' : 'en-US';
+    u.rate = 0.9;
+    
+    synth.cancel();
+    synth.speak(u);
+    
+    // 讀三次設定
+    if (isSpelling && document.getElementById('opt-repeat').checked && !forceSimple) {
+        setTimeout(() => synth.speak(u), 2500);
+        setTimeout(() => synth.speak(u), 5000);
+    }
+}
+
+function checkSpelling(e) {
+    if (e.key === 'Enter') checkAnswer();
+}
+
+function checkAnswer() {
+    const input = document.getElementById('sp-input').value.trim();
+    const target = studyQueue[currentIndex].w;
+    const fb = document.getElementById('sp-feedback');
+    
+    if (input.toLowerCase() === target.toLowerCase()) {
+        fb.innerText = "正確！🎉";
+        fb.className = "feedback correct";
+        fireConfetti();
+        setTimeout(() => {
+            currentIndex++;
+            loadNextSpelling();
+        }, 1000);
+    } else {
+        fb.innerText = "再試一次...";
+        fb.className = "feedback wrong";
+        speakCurrent(true); // 讀錯時只讀單字
+    }
+}
+
+function giveHint() {
+    const target = studyQueue[currentIndex].w;
+    const input = document.getElementById('sp-input');
+    input.value = target.substring(0, input.value.length + 1);
+    input.focus();
+}
+
+function finishSpelling() {
+    isSpelling = false;
+    document.getElementById('spelling-ui').style.display = 'none';
+    document.getElementById('btn-start-sp').style.display = 'block';
+    alert("默書完成！太棒了！");
+}
+
+function updateProgressBar() {
+    const pct = (currentIndex / studyQueue.length) * 100;
+    document.getElementById('sp-bar').style.width = pct + '%';
+}
+
+function toggleCurtain(show) {
+    const c = document.getElementById('curtain');
+    if(show) {
+        c.classList.add('active'); 
+        // 確保洞在輸入框附近 (簡單置中)
+    } else {
+        c.classList.remove('active');
+    }
+}
+
+// --- DATA MANAGEMENT ---
+function updateEditArea() {
+    // 將物件轉換回文字格式顯示
+    const text = rawWords.map(i => `${i.w} | ${i.s || ''}`).join('\n');
+    document.getElementById('edit-area').value = text;
+    renderList();
+}
+
+function saveWords() {
+    const text = document.getElementById('edit-area').value;
+    const lines = text.split('\n');
+    rawWords = [];
+    lines.forEach(line => {
+        if(line.trim()) {
+            // 解析 "Word | Sentence" 格式
+            const parts = line.split('|');
+            const w = parts[0].trim();
+            const s = parts[1] ? parts[1].trim() : "";
+            if(w) rawWords.push({w, s});
+        }
+    });
+    localStorage.setItem('sp_words_v2', JSON.stringify(rawWords));
+    alert("儲存成功！");
+    renderList();
+    currentIndex = 0;
+    updateFlashcardUI();
+}
+
+function loadFromStorage() {
+    const data = localStorage.getItem('sp_words_v2');
+    if (data) {
+        rawWords = JSON.parse(data);
+    }
+}
+
+function renderList() {
+    const ul = document.getElementById('word-list-display');
+    ul.innerHTML = rawWords.map(i => `<li><b>${i.w}</b> <small>${i.s ? '('+i.s+')' : ''}</small></li>`).join('');
+}
+
+function exportData() {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(rawWords));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", "spelling_data.json");
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+}
+
+function importData() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.onchange = e => {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.readAsText(file,'UTF-8');
+        reader.onload = readerEvent => {
+            try {
+                rawWords = JSON.parse(readerEvent.target.result);
+                saveWords(); // Save and refresh
+                updateEditArea();
+            } catch(e) { alert("檔案格式錯誤"); }
         }
     }
+    input.click();
 }
 
-function loadSettings() {
-    const s = localStorage.getItem('fc_settings');
-    if (s) settings = {...settings, ...JSON.parse(s)};
-    document.getElementById('voice-rate').value = settings.rate;
-    document.getElementById('rate-val').innerText = settings.rate;
-    document.getElementById('auto-play').checked = settings.autoPlay;
-    document.getElementById('repeat-thrice').checked = settings.repeatThrice;
-}
-
-function saveSettings() {
-    settings.voiceZh = document.getElementById('voice-zh').value;
-    settings.voiceEn = document.getElementById('voice-en').value;
-    settings.rate = parseFloat(document.getElementById('voice-rate').value);
-    settings.autoPlay = document.getElementById('auto-play').checked;
-    settings.repeatThrice = document.getElementById('repeat-thrice').checked;
-    localStorage.setItem('fc_settings', JSON.stringify(settings));
-}
-
-function openSettings() { document.getElementById('settings-modal').style.display = 'flex'; }
-function closeSettings() { document.getElementById('settings-modal').style.display = 'none'; }
-
-// --- Core Logic ---
-function switchMode(mode) {
-    currentMode = mode;
-    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-    document.querySelector(`.mode-btn[onclick="switchMode('${mode}')"]`).classList.add('active');
-    render();
-}
-
-function parseInput(text) {
-    // Split by newlines, filter empty
-    return text.split(/\n/).map(w => w.trim()).filter(w => w.length > 0);
-}
-
-// --- Rendering ---
-function render() {
-    const container = document.getElementById('app-container');
-    container.innerHTML = '';
-
-    if (words.length === 0) {
-        renderSetup(container);
-    } else {
-        if (currentMode === 'flashcard') renderFlashcard(container);
-        else renderSpelling(container);
-    }
-}
-
-function renderSetup(container) {
-    const isSpelling = currentMode === 'spelling';
-    
-    let html = `
-        <div class="setup-box fade-in">
-            <div style="text-align:center; margin-bottom:10px;">
-                <h2>${isSpelling ? '📝 默書準備' : '📇 認字卡準備'}</h2>
-                <p style="color:#6b7280; font-size:0.9rem;">輸入文字，每行一句/一個詞</p>
-            </div>
-    `;
-
-    // 默書模式專用：例句按鈕和標點開關
-    if (isSpelling) {
-        html += `
-            <div class="dictation-tools">
-                <button class="btn btn-sm btn-outline" onclick="insertSample('zh')">📝 中文例句</button>
-                <button class="btn btn-sm btn-outline" onclick="insertSample('en')">📝 English Ex.</button>
-            </div>
-            <textarea id="input-words" placeholder="在此輸入要默書的內容..."></textarea>
-            <label class="checkbox-wrapper">
-                <input type="checkbox" id="punct-check" ${settings.readPunctuation ? 'checked' : ''} onchange="settings.readPunctuation = this.checked; saveSettings()">
-                <span>🗣️ 讀出標點符號 (，= 逗號)</span>
-            </label>
-        `;
-    } else {
-        html += `<textarea id="input-words" placeholder="輸入單字，例如：\n蘋果\nApple\n香蕉"></textarea>`;
-    }
-
-    html += `
-            <div class="btn-group">
-                <button class="btn btn-primary" onclick="startApp()">▶️ 開始${isSpelling ? '默書' : '練習'}</button>
-                <button class="btn btn-outline" onclick="triggerCamera()">📷 影相導入</button>
-            </div>
-            <input type="file" id="cam-input" accept="image/*" capture="environment" style="display:none" onchange="handleOCR(this)">
-            <div id="ocr-loading" style="display:none; text-align:center; color:var(--primary);">正在讀取文字... ⌛</div>
-        </div>
-    `;
-    container.innerHTML = html;
-}
-
-function insertSample(lang) {
-    const ta = document.getElementById('input-words');
-    if (lang === 'zh') {
-        ta.value = "請注意：明天的會議將延遲舉行；因此，請大家務必重新確認時間表。";
-    } else {
-        ta.value = "Please note: the meeting tomorrow will be delayed; therefore, please check your schedule again.";
-    }
-}
-
-function startApp() {
-    const text = document.getElementById('input-words').value;
-    if (!text.trim()) return alert("請輸入文字！");
-    words = parseInput(text);
-    currentIndex = 0;
-    render();
-}
-
-// --- Flashcard Mode ---
-function renderFlashcard(container) {
-    const word = words[currentIndex];
-    container.innerHTML = `
-        <div class="card-container">
-            <div class="flashcard" onclick="speak('${word.replace(/'/g, "\\'")}')">
-                <div class="word-display">${word}</div>
-                <div class="phonetic">👆 點擊發音</div>
-            </div>
-            <div class="card-actions">
-                <button class="btn btn-outline" onclick="prevCard()">⏮️</button>
-                <button class="btn btn-secondary" onclick="markKnown()">✅ 識</button>
-                <button class="btn btn-accent" onclick="markUnknown()">❌ 唔識</button>
-                <button class="btn btn-outline" onclick="nextCard()">⏭️</button>
-            </div>
-            <button class="btn btn-outline" style="margin-top:10px" onclick="exitApp()">⏹️ 結束練習</button>
-        </div>
-    `;
-    if (settings.autoPlay) setTimeout(() => speak(word), 500);
-}
-
-// --- Spelling Mode (Dictation) ---
-function renderSpelling(container) {
-    const word = words[currentIndex];
-    container.innerHTML = `
-        <div class="card-container spelling-area">
-            <div style="font-size:0.9rem; color:#6b7280; margin-bottom:10px;">第 ${currentIndex + 1} / ${words.length} 句</div>
-            <button class="btn btn-primary" onclick="speakCurrentSpelling()">🔊 讀題目</button>
-            
-            <input type="text" class="spelling-input" id="spell-in" placeholder="在此輸入..." autocomplete="off">
-            <div id="feedback" class="spelling-feedback"></div>
-            
-            <div class="btn-group">
-                <button class="btn btn-secondary" onclick="checkSpelling()">✅ 檢查</button>
-                <button class="btn btn-accent" onclick="showAnswer()">👀 偷睇</button>
-            </div>
-            <button class="btn btn-outline" style="margin-top:15px" onclick="nextCard()">⏭️ 下一句</button>
-            <button class="btn btn-outline" style="margin-top:10px" onclick="exitApp()">⏹️ 結束</button>
-        </div>
-    `;
-    // Auto speak first time
-    setTimeout(() => speakCurrentSpelling(), 500);
-}
-
-function speakCurrentSpelling() {
-    let text = words[currentIndex];
-    // 如果開啟了標點朗讀，進行轉換
-    if (settings.readPunctuation) {
-        text = processTextForDictation(text);
-    }
-    
-    // 默書模式邏輯：可能讀三次
-    if (settings.repeatThrice) {
-        speak(text, () => setTimeout(() => speak(text, () => setTimeout(() => speak(text), 1000)), 1000));
-    } else {
-        speak(text);
-    }
-}
-
-// 標點符號轉換邏輯 (核心功能)
-function processTextForDictation(text) {
-    // 簡單判斷主要語言
-    const isZh = /[\u4e00-\u9fa5]/.test(text);
-    
-    if (isZh) {
-        return text.replace(/，/g, "，逗號，")
-                   .replace(/。/g, "，句號。")
-                   .replace(/；/g, "，分號，")
-                   .replace(/：/g, "，冒號，")
-                   .replace(/？/g, "，問號，")
-                   .replace(/！/g, "，驚嘆號，")
-                   .replace(/,/g, "，逗號，")
-                   .replace(/\./g, "，句號。");
-    } else {
-        return text.replace(/,/g, ", comma, ")
-                   .replace(/\./g, ", full stop. ")
-                   .replace(/;/g, ", semicolon, ")
-                   .replace(/:/g, ", colon, ")
-                   .replace(/\?/g, ", question mark, ")
-                   .replace(/!/g, ", exclamation mark, ");
-    }
-}
-
-function checkSpelling() {
-    const input = document.getElementById('spell-in').value.trim();
-    const target = words[currentIndex].trim();
-    const fb = document.getElementById('feedback');
-    
-    // 移除標點進行比較 (寬容模式)
-    const clean = str => str.replace(/[^\w\u4e00-\u9fa5]/g, '').toLowerCase();
-    
-    if (clean(input) === clean(target)) {
-        fb.innerHTML = "🎉 答啱咗！"; fb.className = "spelling-feedback correct";
-        fireConfetti();
-        setTimeout(nextCard, 1500);
-    } else {
-        fb.innerHTML = "❌ 再試一次"; fb.className = "spelling-feedback wrong";
-    }
-}
-
-function showAnswer() {
-    document.getElementById('spell-in').value = words[currentIndex];
-    document.getElementById('feedback').innerText = "👀 答案已顯示";
-}
-
-// --- Navigation ---
-function nextCard() {
-    if (currentIndex < words.length - 1) { currentIndex++; render(); } 
-    else { alert("🎉 完成所有練習！"); exitApp(); }
-}
-function prevCard() { if (currentIndex > 0) { currentIndex--; render(); } }
-function exitApp() { words = []; render(); }
-function markKnown() { nextCard(); } // Placeholder for logic
-function markUnknown() { nextCard(); } // Placeholder
-
-// --- TTS Engine ---
-function speak(text, callback) {
-    if (synth.speaking) synth.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.rate = settings.rate;
-    
-    // Auto Detect Language for Voice Selection
-    const isZh = /[\u4e00-\u9fa5]/.test(text);
-    const voiceName = isZh ? settings.voiceZh : settings.voiceEn;
-    const v = voices.find(v => v.name === voiceName);
-    if (v) u.voice = v;
-    
-    u.onend = callback || null;
-    synth.speak(u);
-}
-
-// --- OCR (Camera) ---
-function triggerCamera() { document.getElementById('cam-input').click(); }
-async function handleOCR(input) {
-    if (!input.files || !input.files[0]) return;
-    document.getElementById('ocr-loading').style.display = 'block';
-    
-    // Simulating OCR (Since we can't use real API key here)
-    // In real usage, you'd fetch to Tesseract.js or Google Vision
-    setTimeout(() => {
-        const mockText = "Apple\nBanana\n橙\n士多啤梨";
-        document.getElementById('input-words').value = mockText;
-        document.getElementById('ocr-loading').style.display = 'none';
-        alert("已讀取圖片文字 (模擬)");
-    }, 1500);
-}
-
-// --- Confetti Effect (Mini) ---
+// --- UTILS (Confetti) ---
 function fireConfetti() {
-    const c = document.getElementById('confetti');
-    const ctx = c.getContext('2d');
-    c.width = window.innerWidth; c.height = window.innerHeight;
-    let p = [];
-    for(let i=0;i<50;i++) p.push({x:c.width/2, y:c.height/2, dx:Math.random()*10-5, dy:Math.random()*10-5, c:`hsl(${Math.random()*360},100%,50%)`});
+    const canvas = document.getElementById('confetti');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+    let particles = [];
+    for(let i=0; i<100; i++) particles.push({x:canvas.width/2, y:canvas.height/2, vx:(Math.random()-0.5)*10, vy:(Math.random()-0.5)*10, c:`hsl(${Math.random()*360},100%,50%)`});
     function draw() {
-        ctx.clearRect(0,0,c.width,c.height);
-        p.forEach((k,i) => { k.x+=k.dx; k.y+=k.dy; k.dy+=0.2; ctx.fillStyle=k.c; ctx.fillRect(k.x,k.y,5,5); if(k.y>c.height) p.splice(i,1); });
-        if(p.length) requestAnimationFrame(draw); else ctx.clearRect(0,0,c.width,c.height);
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        particles.forEach((p,i) => {
+            p.x+=p.vx; p.y+=p.vy; p.vy+=0.2;
+            ctx.fillStyle=p.c; ctx.fillRect(p.x,p.y,5,5);
+            if(p.y>canvas.height) particles.splice(i,1);
+        });
+        if(particles.length) requestAnimationFrame(draw);
     }
     draw();
 }
+
+// Start
+init();
 </script>
 </body>
 </html>
