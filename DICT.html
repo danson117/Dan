@@ -1,32 +1,23 @@
 <!DOCTYPE html>
-<html lang="en-GB">
+<html lang="zh-HK">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>English Spelling Assistant (v2.0)</title>
-    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700;900&family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>Spelling Assistant (Turbo Fix + AutoPlay)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-primary: #faf9f7;
-            --bg-secondary: #ffffff;
+            --bg-primary: #f3f4f6;
             --bg-card: #ffffff;
-            --text-primary: #2c2416;
-            --text-secondary: #6b5d48;
-            --accent-primary: #1d4ed8;
-            --accent-secondary: #0284c7;
-            --accent-success: #059669;
-            --border-light: #e8e3db;
-            --shadow: rgba(0, 0, 0, 0.08);
-        }
-
-        .dark {
-            --bg-primary: #1a1612;
-            --bg-secondary: #242019;
-            --bg-card: #2d2820;
-            --text-primary: #f5f1ea;
-            --text-secondary: #b8ae9d;
-            --border-light: #3d3630;
-            --shadow: rgba(0, 0, 0, 0.4);
+            --text-primary: #1f2937;
+            --text-secondary: #4b5563;
+            --accent-primary: #7c3aed;
+            --accent-secondary: #8b5cf6;
+            --accent-success: #10b981;
+            --border-light: #e5e7eb;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --highlight-bg: #ede9fe;
+            --highlight-border: #c4b5fd;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -36,525 +27,889 @@
             background: var(--bg-primary);
             color: var(--text-primary);
             min-height: 100vh;
-            transition: background-color 0.3s ease;
+            padding-bottom: 3rem;
         }
 
+        /* Loading Curtain */
+        #curtain {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.9);
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        #curtain.active { display: flex; }
+        .spinner {
+            width: 40px; height: 40px;
+            border: 4px solid var(--accent-primary);
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Header */
         .header {
-            background: linear-gradient(135deg, #1d4ed8, #0284c7);
-            padding: 0.4rem 0.75rem;
-            text-align: left;
-            box-shadow: 0 2px 8px var(--shadow);
+            background: var(--bg-card);
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-light);
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            box-shadow: var(--shadow);
         }
-
         .header h1 {
             font-family: 'Crimson Pro', serif;
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: white;
-            display: inline-flex; align-items: center; gap: 0.35rem;
+            font-size: 1.5rem;
+            color: var(--accent-primary);
         }
 
-        .container { max-width: 850px; margin: 2.5rem auto; padding: 0 1rem; }
+        .container {
+            max-width: 800px;
+            margin: 1.5rem auto;
+            padding: 0 1rem;
+        }
 
-        .card {
-            background: var(--bg-card); border-radius: 24px; padding: 2.5rem;
-            margin-bottom: 2rem; box-shadow: 0 4px 24px var(--shadow);
+        /* Collapsible Input Section */
+        .section-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
             border: 1px solid var(--border-light);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+            transition: all 0.3s ease;
         }
 
-        .card-title {
-            font-family: 'Crimson Pro', serif; font-size: 1.6rem; font-weight: 700;
-            color: var(--accent-primary); margin-bottom: 1.75rem;
+        .section-header {
+            padding: 1rem 1.5rem;
+            background: var(--bg-card);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            border-bottom: 1px solid transparent;
+        }
+        
+        .section-card.collapsed .section-content {
+            max-height: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .section-card.collapsed .toggle-icon { transform: rotate(-90deg); }
+
+        .section-content {
+            padding: 1.5rem;
+            max-height: 1200px; 
+            opacity: 1;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
+        /* Input Area */
         .word-list-input {
-            width: 100%; min-height: 330px; padding: 1.25rem;
-            border: 2px solid var(--border-light); border-radius: 16px;
-            font-size: 16px; font-family: 'Work Sans', sans-serif;
-            background: var(--bg-secondary); color: var(--text-primary);
-            resize: vertical; line-height: 1.8;
+            width: 100%;
+            min-height: 150px;
+            padding: 1rem;
+            border: 2px solid var(--border-light);
+            border-radius: 12px;
+            font-size: 16px;
+            font-family: 'Work Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            resize: vertical;
+            line-height: 1.6;
+            margin-bottom: 1rem;
         }
         .word-list-input:focus { outline: none; border-color: var(--accent-secondary); }
 
-        .input-actions { margin-top: 1.25rem; display: flex; gap: 1rem; flex-wrap: wrap; }
+        /* Tools Bar */
+        .tools-bar {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+        .tool-btn {
+            padding: 0.5rem 0.8rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            color: var(--text-secondary);
+        }
+
+        .primary-btn {
+            width: 100%;
+            padding: 1rem;
+            background: var(--accent-success);
+            color: white;
+            font-weight: 700;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
+            transition: transform 0.1s;
+        }
+        .primary-btn:active { transform: scale(0.98); }
+
+        /* Peek / Answer View */
+        .answer-view {
+            display: none;
+            background: var(--bg-primary);
+            border-radius: 12px;
+            padding: 1rem;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 2px solid var(--border-light);
+            margin-bottom: 1rem;
+        }
+        .answer-view.active { display: block; }
         
-        .file-input-label {
-            padding: 0.875rem 1.75rem; background: var(--bg-secondary);
-            border: 2px solid var(--border-light); border-radius: 12px;
-            cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 0.5rem;
+        .sentence-item {
+            padding: 0.75rem;
+            margin-bottom: 0.25rem;
+            border-radius: 8px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+        .sentence-item.current {
+            background: var(--highlight-bg);
+            border-color: var(--highlight-border);
+            color: var(--text-primary);
+            font-weight: 600;
         }
 
-        input[type="file"] { display: none; }
+        /* Control Panel */
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            background: var(--bg-primary);
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        .counter { color: var(--accent-primary); }
+        .status-msg { font-size: 0.85rem; color: var(--text-secondary); }
 
-        .order-selection { margin: 1.75rem 0; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+        .main-controls {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .ctrl-btn {
+            padding: 1rem;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.3rem;
+            background: var(--bg-card);
+            border: 2px solid var(--border-light);
+            color: var(--text-primary);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .ctrl-btn:active { transform: scale(0.98); }
+        .ctrl-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .btn-play {
+            background: var(--accent-primary);
+            color: white;
+            border-color: var(--accent-primary);
+            font-size: 1.1rem;
+        }
+        .btn-play.stop-mode { background: #ef4444; border-color: #ef4444; }
+        .btn-play.repeat-mode { background: #f59e0b; border-color: #f59e0b; }
+
+        /* Settings Grid */
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-light);
+        }
+
+        .setting-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .setting-label { font-size: 0.8rem; color: var(--text-secondary); font-weight: 600; }
         
-        .order-btn {
-            padding: 1rem 2rem; background: var(--bg-secondary);
-            border: 2px solid var(--border-light); border-radius: 12px;
-            cursor: pointer; font-weight: 600; color: var(--text-primary);
+        .toggle-row { display: flex; gap: 0.25rem; }
+        .toggle-btn {
+            flex: 1;
+            padding: 0.4rem;
+            border: 1px solid var(--border-light);
+            background: var(--bg-card);
+            font-size: 0.8rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+            border-radius: 6px;
+        }
+        .toggle-btn.active {
+            background: var(--accent-secondary);
+            color: white;
+            border-color: var(--accent-secondary);
+        }
+        .toggle-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .secondary-btn {
+            width: 100%;
+            padding: 0.8rem;
+            margin-top: 1rem;
+            background: var(--bg-card);
+            border: 2px solid var(--border-light);
+            color: var(--text-secondary);
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
         }
 
-        .order-btn.selected {
-            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-            color: white; border-color: var(--accent-primary);
-        }
-
-        .btn {
-            padding: 1.1rem 2.5rem; border: none; border-radius: 14px;
-            font-size: 1.1rem; font-weight: 600; cursor: pointer;
-            color: white; background: #16a34a;
-            box-shadow: 0 4px 16px var(--shadow);
-        }
-        .btn:hover { transform: translateY(-3px); background: #15803d; }
-
-        .practice-area { display: none; }
-        .practice-area.active { display: block; }
-
-        .current-word-display {
-            text-align: center; padding: 5rem 2rem;
-            background: linear-gradient(135deg, rgba(29, 78, 216, 0.08), rgba(2, 132, 199, 0.08));
-            border-radius: 24px; margin-bottom: 2.5rem;
-            border: 3px solid var(--border-light);
-        }
-
-        .current-word-display.final {
-            background: linear-gradient(135deg, rgba(5, 150, 105, 0.15), rgba(16, 185, 129, 0.15));
-            border-color: var(--accent-success);
-        }
-
-        .controls { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; margin-top: 2.5rem; }
-        
-        .control-btn {
-            padding: 1.75rem 1.5rem; background: var(--bg-secondary);
-            border: 2px solid var(--border-light); border-radius: 16px;
-            cursor: pointer; font-size: 1.15rem; font-weight: 600;
-            display: flex; flex-direction: column; align-items: center; gap: 0.75rem;
-        }
-        .control-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-        .playback-controls { display: flex; justify-content: center; gap: 1rem; margin-top: 1.5rem; flex-wrap: wrap; }
-        
-        .speed-btn, .word-by-word-toggle {
-            padding: 0.6rem 1.2rem; background: var(--bg-secondary);
-            border: 2px solid var(--border-light); border-radius: 10px;
-            cursor: pointer; font-weight: 600; color: var(--text-secondary);
-        }
-        .speed-btn.active, .word-by-word-toggle.active {
-            background: var(--accent-primary); color: white; border-color: var(--accent-primary);
-        }
-
-        .complete-message { text-align: center; padding: 4rem 2rem; }
-        .back-main-btn {
-            margin-top: 1.5rem; padding: 0.8rem 1.6rem; background: #e5e7eb;
-            color: #111827; border: none; border-radius: 10px; font-weight: 600; cursor: pointer;
-        }
-
-        @media (max-width: 768px) {
-            .controls { grid-template-columns: 1fr !important; }
+        .version-footer {
+            position: fixed;
+            bottom: 10px;
+            right: 15px;
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            opacity: 0.6;
+            pointer-events: none;
         }
     </style>
 </head>
 <body>
+
+<div id="curtain">
+    <div class="spinner"></div>
+    <p style="margin-top:1rem; font-weight:600;">AI Processing...</p>
+</div>
+
 <div class="header">
-    <h1>📖 English Spelling Assistant</h1>
+    <h1>📖 Spelling Assistant</h1>
 </div>
 
-<div class="container" id="mainPage">
-    <!-- Setup Section -->
-    <div id="setupSection">
-        <div class="card">
-            <div class="card-title">📝 Prepare Your Words</div>
+<div class="container">
 
-            <textarea class="word-list-input" id="wordListInput"></textarea>
-
-            <div class="input-actions">
-                <label class="file-input-label">
-                    📁 Upload Text File
-                    <input type="file" id="fileInput" accept=".txt">
+    <!-- Section 1: Input (Collapsible) -->
+    <div class="section-card" id="inputSection">
+        <div class="section-header" onclick="toggleInputSection()">
+            <span>📝 Content Editor</span>
+            <span class="toggle-icon">▼</span>
+        </div>
+        <div class="section-content">
+            <textarea id="wordListInput" class="word-list-input" placeholder="Paste your text here..."></textarea>
+            
+            <div class="tools-bar">
+                <button class="tool-btn" onclick="loadExample('eng')">🇺🇸 Eng Example</button>
+                <button class="tool-btn" onclick="loadExample('chi')">🇭🇰 Chi Example</button>
+                <label class="tool-btn">
+                    📸 Camera (AI OCR)
+                    <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none">
                 </label>
-                <span id="fileName" style="color: var(--text-secondary); margin-left: 10px;"></span>
             </div>
 
-            <div class="order-selection">
-                <button class="order-btn selected" id="sequentialBtn" onclick="selectOrder('sequential')">
-                    📋 Sequential
-                </button>
-                <button class="order-btn" id="randomBtn" onclick="selectOrder('random')">
-                    🔀 Random
-                </button>
-            </div>
-
-            <div style="text-align: center; margin-top: 2rem;">
-                <button class="btn" onclick="startSpelling()">
-                    🚀 Start Practice
-                </button>
-            </div>
+            <button class="primary-btn" id="startBtn" onclick="startSpelling()">🚀 Start Spelling</button>
         </div>
     </div>
 
-    <!-- Practice Section -->
-    <div id="practiceSection" class="practice-area">
-        <div class="card">
-            <div class="current-word-display" id="wordDisplay">
-                <div style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 1rem;" id="wordCounter">1 / 5</div>
-                <div style="font-size: 1.15rem; color: var(--text-secondary);" id="statusText">Ready</div>
+    <!-- Section 2: Controls -->
+    <div class="section-card" id="controlSection">
+        <div class="section-content">
+            
+            <!-- Peek View -->
+            <div id="peekView" class="answer-view"></div>
+
+            <div class="status-bar">
+                <div class="counter" id="counterDisplay">0 / 0</div>
+                <div class="status-msg" id="statusMessage">Waiting to start...</div>
             </div>
 
-            <div class="playback-controls">
-                <div style="display:flex; gap:0.5rem; align-items:center;">
-                    <span style="font-size:0.9rem;">Speed:</span>
-                    <button class="speed-btn" onclick="setSpeed(0.5)">0.5×</button>
-                    <button class="speed-btn active" onclick="setSpeed(0.75)" id="speed075x">0.75×</button>
-                    <button class="speed-btn" onclick="setSpeed(1)">1×</button>
+            <div class="main-controls">
+                <button class="ctrl-btn" id="prevBtn" onclick="changeItem(-1)" disabled>
+                    <span style="font-size:1.5rem">⏮️</span>
+                </button>
+                
+                <button class="ctrl-btn btn-play" id="centerBtn" onclick="handleCenterButton()" disabled>
+                    <span class="icon" style="font-size:1.5rem">▶️</span>
+                    <span class="label">Play</span>
+                </button>
+
+                <button class="ctrl-btn" id="nextBtn" onclick="changeItem(1)" disabled>
+                    <span style="font-size:1.5rem">⏭️</span>
+                </button>
+            </div>
+
+            <div class="settings-grid">
+                <div class="setting-group">
+                    <span class="setting-label">Speed</span>
+                    <div class="toggle-row">
+                        <button class="toggle-btn" onclick="setSpeed(0.75)" id="spd075">0.75x</button>
+                        <button class="toggle-btn active" onclick="setSpeed(1.0)" id="spd1">1.0x</button>
+                        <button class="toggle-btn" onclick="setSpeed(1.25)" id="spd125">1.25x</button>
+                    </div>
                 </div>
-                <button class="word-by-word-toggle" id="wordByWordBtn" onclick="toggleWordByWord()">
-                    📝 Word by Word
-                </button>
+
+                <div class="setting-group">
+                    <span class="setting-label">Mode</span>
+                    <div class="toggle-row">
+                        <button class="toggle-btn active" onclick="toggleWBW()" id="wbwBtn">WBW</button>
+                        <button class="toggle-btn active" onclick="togglePunc()" id="puncBtn">Read Punc.</button>
+                    </div>
+                </div>
             </div>
 
-            <div class="controls" style="grid-template-columns: repeat(3, 1fr);">
-                <button class="control-btn" onclick="previousWord()" id="prevBtn" disabled>
-                    <span>⏮️ Previous</span>
-                </button>
-                <button class="control-btn" onclick="repeatWord()" id="repeatBtn">
-                    <span id="repeatIcon">🔁</span> <span id="repeatText">Repeat</span>
-                </button>
-                <button class="control-btn" onclick="nextWord()" id="nextBtn">
-                    <span>⏭️ Next</span>
-                </button>
-            </div>
-
-            <div style="text-align:center;">
-                <button class="back-main-btn" onclick="goToMainPage()">
-                    ⬅ Back to Edit
-                </button>
-            </div>
+            <button class="secondary-btn" id="peekBtn" onclick="togglePeek()" disabled>👁️ Peek Answers</button>
         </div>
     </div>
 
-    <!-- Complete Section -->
-    <div id="completeSection" class="practice-area">
-        <div class="card">
-            <div class="complete-message">
-                <h2 style="font-size: 2.5rem; color: var(--accent-success); margin-bottom: 1rem;">🎉 Complete!</h2>
-                <p>You've finished the list.</p>
-            </div>
-            <div style="text-align: center; margin-top: 2rem;">
-                <button class="btn" onclick="restartSpelling()">
-                    🔄 Start Again
-                </button>
-            </div>
-            <div style="text-align:center; margin-top: 1rem;">
-                <button class="back-main-btn" onclick="goToMainPage()">
-                    ⬅ Back to Edit
-                </button>
-            </div>
-        </div>
-    </div>
 </div>
+
+<div class="version-footer">v2.7 (Turbo Fix + AutoPlay)</div>
 
 <script>
-    /* Dark mode detection */
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        document.documentElement.classList.add('dark');
-    }
+    // --- State ---
+    const state = {
+        sentences: [],
+        currentIndex: 0,
+        isPlaying: false,
+        speed: 1.0, 
+        isWBW: true, // Default ON
+        readPunctuation: true, // Default ON
+        voice: 'Lily', 
+        audioCache: {}, 
+        isInputVirgin: true,
+        isPeeking: false,
+        langMode: 'en' 
+    };
 
-    /* State */
-    let words = [];
-    let currentIndex = 0;
-    let playbackSpeed = 0.75;
-    let orderMode = 'sequential';
-    let wordByWordMode = false;
-    let isPlaying = false;
-    
-    // Voice Variables (from Flashcard App logic)
-    let englishVoice = null;
-    let availableVoices = [];
-
-    // Default Text
-    const defaultText = "beautiful\nHello, world.\nThis is a test, ensuring it works.";
-
-    /* Initialization */
-    window.onload = function() {
-        const input = document.getElementById('wordListInput');
-        input.value = defaultText;
-
-        // Auto-clear logic
-        input.addEventListener('focus', function() {
-            if (this.value.trim() === defaultText.trim()) {
-                this.value = '';
-            }
-        });
-
-        // Load voices
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.onvoiceschanged = loadVoices;
-            loadVoices();
+    // --- DOM Elements ---
+    const els = {
+        inputSection: document.getElementById('inputSection'),
+        input: document.getElementById('wordListInput'),
+        peekView: document.getElementById('peekView'),
+        counter: document.getElementById('counterDisplay'),
+        status: document.getElementById('statusMessage'),
+        centerBtn: document.getElementById('centerBtn'),
+        prevBtn: document.getElementById('prevBtn'),
+        nextBtn: document.getElementById('nextBtn'),
+        peekBtn: document.getElementById('peekBtn'),
+        wbwBtn: document.getElementById('wbwBtn'),
+        puncBtn: document.getElementById('puncBtn'),
+        curtain: document.getElementById('curtain'),
+        speedBtns: {
+            0.75: document.getElementById('spd075'),
+            1.0: document.getElementById('spd1'),
+            1.25: document.getElementById('spd125')
         }
     };
 
-    /* Voice Loading Logic (Adapted from Flashcard App) */
-    function loadVoices() {
-        availableVoices = window.speechSynthesis.getVoices();
-        if (availableVoices.length === 0) return;
+    let currentAudioObj = null; 
+    let synth = window.speechSynthesis; 
+    let fetchTimeoutId = null;
 
-        // Priority: Moira -> IE -> GB Female -> Any English
-        englishVoice = availableVoices.find(v => v.name.includes('Moira')) ||
-                       availableVoices.find(v => v.lang === 'en-IE') ||
-                       availableVoices.find(v => v.lang === 'en-GB' && v.name.includes('Female')) ||
-                       availableVoices.find(v => v.lang === 'en-GB') ||
-                       availableVoices.find(v => v.lang.startsWith('en'));
+    // --- Initialization ---
+    function init() {
+        loadExample('eng');
+        els.input.addEventListener('focus', () => {
+            if (state.isInputVirgin) {
+                els.input.value = '';
+                state.isInputVirgin = false;
+            }
+        });
+        setupOCR();
     }
 
-    // Helper: Number to English
-    function numberToEnglish(n) {
-        const ones = ["zero","one","two","three","four","five","six","seven","eight","nine","ten",
-            "eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen"];
-        const tens = ["","","twenty","thirty","forty","fifty","sixty","seventy","eighty","ninety"];
-        if (n < 20) return ones[n];
-        if (n < 100) {
-            const t = Math.floor(n/10), o = n%10;
-            return o === 0 ? tens[t] : `${tens[t]} ${ones[o]}`;
-        }
-        return String(n);
+    // --- OCR Logic ---
+    function setupOCR() {
+        document.getElementById('cameraInput').addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            if (window.Poe && window.Poe.sendUserMessage) {
+                toggleCurtain(true);
+                const handlerId = "ocr-" + Date.now();
+
+                window.Poe.registerHandler(handlerId, (result) => {
+                    if (result.responses[0].status === "complete") {
+                        els.input.value = result.responses[0].content;
+                        toggleCurtain(false);
+                        state.isInputVirgin = false;
+                        setTimeout(() => alert("Text extracted!"), 100);
+                    }
+                });
+
+                const prompt = `Extract text. Output ONLY lines starting with numbers (e.g. 1. 2.). No other text.`;
+                await window.Poe.sendUserMessage(
+                    `@Claude-Sonnet-4.5 ${prompt}`,
+                    { attachments: [file], handler: handlerId, openChat: false }
+                );
+            } else {
+                alert("Poe environment not detected.");
+            }
+        });
     }
 
-    // Helper: Punctuation to Words (Standard Mode)
-    function convertPunctuationToWords(sentence) {
-        // In standard mode, we usually just read the sentence naturally.
-        // But if you want punctuation read out explicitly even in standard mode, keep this.
-        // However, usually standard mode reads "Hello, world" as "Hello [pause] world".
-        // Based on your request, I will keep explicit punctuation reading for Word-by-Word,
-        // but for standard mode, let's keep it natural unless it's specific symbols.
-        return sentence; 
+    function toggleCurtain(show) {
+        if(show) els.curtain.classList.add('active');
+        else els.curtain.classList.remove('active');
     }
 
-    // Helper: Word by Word Logic (Enhanced)
-    function buildWordByWordSentence(sentence) {
-        // 1. Replace punctuation with spoken words
-        let processed = sentence
-            .replace(/\.{3}/g, ' ellipsis ')
-            .replace(/,/g, ' comma ')
-            .replace(/\./g, ' full stop ')
-            .replace(/\?/g, ' question mark ')
-            .replace(/!/g, ' exclamation mark ')
-            .replace(/:/g, ' colon ')
-            .replace(/;/g, ' semicolon ');
-
-        // 2. Split by spaces to get words
-        const rawWords = processed.split(/\s+/).filter(w => w.length > 0);
-
-        // 3. Join with periods to force the TTS engine to pause between words
-        // e.g., "Hello comma world full stop" -> "Hello. comma. world. full stop."
-        return rawWords.join('. ') + '.';
-    }
-
-    /* File Input */
-    document.getElementById('fileInput').addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            document.getElementById('fileName').textContent = file.name;
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                document.getElementById('wordListInput').value = event.target.result;
-            };
-            reader.readAsText(file);
-        }
-    });
-
-    function selectOrder(mode) {
-        orderMode = mode;
-        document.getElementById('sequentialBtn').classList.remove('selected');
-        document.getElementById('randomBtn').classList.remove('selected');
-        if (mode === 'sequential') document.getElementById('sequentialBtn').classList.add('selected');
-        else document.getElementById('randomBtn').classList.add('selected');
-    }
-
-    function setSpeed(speed) {
-        playbackSpeed = speed;
-        document.querySelectorAll('.speed-btn').forEach(btn => btn.classList.remove('active'));
-        if (speed === 0.5) document.querySelectorAll('.speed-btn')[0].classList.add('active');
-        else if (speed === 0.75) document.getElementById('speed075x').classList.add('active');
-        else if (speed === 1) document.querySelectorAll('.speed-btn')[2].classList.add('active');
+    // --- Logic: Text Parsing ---
+    function parseText() {
+        const raw = els.input.value;
+        let lines = raw.split('\n');
         
-        if (isPlaying) {
-            window.speechSynthesis.cancel();
-            setTimeout(() => playCurrentWord(), 100);
+        const validLineRegex = /^\d+[\.\)\s]/;
+
+        let validLines = lines
+            .map(l => l.trim())
+            .filter(l => l.length > 0)
+            .filter(l => validLineRegex.test(l));
+
+        if (validLines.length === 0 && lines.length > 0) {
+            alert("No valid sentences found! Lines must start with '1.', '1)', or '1 '.");
+            return;
+        }
+
+        const firstLine = validLines[0] || "";
+        state.langMode = /[\u4e00-\u9fa5]/.test(firstLine) ? 'zh' : 'en';
+
+        // --- FIX 2: Chinese Speed Default ---
+        if (state.langMode === 'zh') {
+            state.isWBW = false;
+            els.wbwBtn.disabled = true;
+            els.wbwBtn.classList.remove('active');
+            
+            // Auto set speed to 0.75 for Chinese
+            setSpeed(0.75, false); // false = don't auto play yet
+        } else {
+            els.wbwBtn.disabled = false;
+            state.isWBW = true; 
+            els.wbwBtn.classList.add('active');
+            
+            // Auto set speed to 1.0 for English
+            setSpeed(1.0, false);
+        }
+
+        state.sentences = validLines.map(line => {
+            const clean = line.replace(/^\d+[\.\)\s]+/, ''); 
+            return { original: line, clean: clean };
+        });
+    }
+
+    function loadExample(type) {
+        state.isInputVirgin = true; 
+        if (type === 'eng') {
+            els.input.value = "1. The quick brown fox, jumps over the lazy dog.\n2. She sells seashells by the seashore.";
+        } else {
+            els.input.value = "1. 今天天氣很好，我們去公園玩。\n2. 這是我的書包，裡面有很多書本。";
         }
     }
 
-    function toggleWordByWord() {
-        wordByWordMode = !wordByWordMode;
-        const btn = document.getElementById('wordByWordBtn');
-        if (wordByWordMode) {
-            btn.classList.add('active');
-            // Force slower speed for clarity in word-by-word
-            setSpeed(0.75); 
+    // --- Logic: UI Interaction ---
+    function toggleInputSection(forceCollapse = null) {
+        if (forceCollapse !== null) {
+            forceCollapse 
+                ? els.inputSection.classList.add('collapsed')
+                : els.inputSection.classList.remove('collapsed');
         } else {
-            btn.classList.remove('active');
-        }
-        if (isPlaying) {
-            window.speechSynthesis.cancel();
-            setTimeout(() => playCurrentWord(), 100);
+            els.inputSection.classList.toggle('collapsed');
         }
     }
 
     function startSpelling() {
-        const input = document.getElementById('wordListInput').value;
-        words = input.split('\n').map(w => w.trim()).filter(w => w.length > 0);
+        parseText();
+        if (state.sentences.length === 0) return;
 
-        if (words.length === 0) {
-            alert('Please enter at least one word!');
-            return;
-        }
-
-        if (orderMode === 'random') {
-            words = words.sort(() => Math.random() - 0.5);
-        }
-
-        currentIndex = 0;
-        isPlaying = false;
+        toggleInputSection(true);
+        state.currentIndex = 0;
+        state.audioCache = {}; 
         
-        document.getElementById('setupSection').style.display = 'none';
-        document.getElementById('practiceSection').classList.add('active');
-        document.getElementById('completeSection').classList.remove('active');
+        els.peekBtn.disabled = false;
+        enableControls(true);
         
         updateDisplay();
-        setTimeout(() => playCurrentWord(), 500);
+        updatePeekView();
+        
+        unlockAudio();
+        playCurrent();
+    }
+
+    function unlockAudio() {
+        const silent = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA");
+        silent.play().catch(() => {});
+    }
+
+    function togglePeek() {
+        state.isPeeking = !state.isPeeking;
+        if (state.isPeeking) {
+            els.peekView.classList.add('active');
+            els.peekBtn.textContent = "🙈 Hide Answers";
+            updatePeekView(); 
+        } else {
+            els.peekView.classList.remove('active');
+            els.peekBtn.textContent = "👁️ Peek Answers";
+        }
+    }
+
+    function updatePeekView() {
+        els.peekView.innerHTML = '';
+        state.sentences.forEach((s, idx) => {
+            const div = document.createElement('div');
+            div.className = `sentence-item ${idx === state.currentIndex ? 'current' : ''}`;
+            div.innerHTML = s.original; 
+            div.onclick = () => jumpTo(idx);
+            els.peekView.appendChild(div);
+        });
+        const active = els.peekView.querySelector('.current');
+        if(active) active.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function jumpTo(index) {
+        if (index >= 0 && index < state.sentences.length) {
+            stopAudio();
+            state.currentIndex = index;
+            updateDisplay();
+            if(state.isPeeking) updatePeekView();
+            playCurrent();
+        }
+    }
+
+    function changeItem(delta) {
+        jumpTo(state.currentIndex + delta);
     }
 
     function updateDisplay() {
-        document.getElementById('wordCounter').textContent = `${currentIndex + 1} / ${words.length}`;
-        const display = document.getElementById('wordDisplay');
-        if (currentIndex === words.length - 1) display.classList.add('final');
-        else display.classList.remove('final');
-        
-        document.getElementById('prevBtn').disabled = (currentIndex === 0);
+        els.counter.textContent = `${state.currentIndex + 1} / ${state.sentences.length}`;
+        els.prevBtn.disabled = state.currentIndex === 0;
+        els.nextBtn.disabled = state.currentIndex === state.sentences.length - 1;
     }
 
-    function buildSpeakText(i) {
-        const original = words[i];
-        let textToSpeak = original;
+    function enableControls(enabled) {
+        els.centerBtn.disabled = !enabled;
+        els.prevBtn.disabled = !enabled && state.currentIndex === 0;
+        els.nextBtn.disabled = !enabled && state.currentIndex === state.sentences.length - 1;
+    }
 
-        // Check for "1. Word" format
-        const qMatch = /^(\d+)\.\s*(.*)$/.exec(original);
+    // --- FIX 3: Auto Play on Setting Change ---
+    function setSpeed(val, autoPlay = true) {
+        state.speed = val;
+        Object.keys(els.speedBtns).forEach(k => els.speedBtns[k].classList.remove('active'));
+        if(els.speedBtns[val]) els.speedBtns[val].classList.add('active');
         
-        if (qMatch) {
-            const num = parseInt(qMatch[1], 10);
-            const rest = qMatch[2];
-            const numEnglish = numberToEnglish(num);
-            const numberPart = `Number ${numEnglish}. `;
+        // Force replay if we have sentences loaded
+        if (autoPlay && state.sentences.length > 0) {
+            playCurrent();
+        }
+    }
 
-            if (wordByWordMode) {
-                textToSpeak = numberPart + buildWordByWordSentence(rest);
-            } else {
-                textToSpeak = numberPart + rest;
+    function toggleWBW() {
+        if(state.langMode === 'zh') return; 
+        state.isWBW = !state.isWBW;
+        els.wbwBtn.classList.toggle('active', state.isWBW);
+        state.audioCache = {};
+        
+        // Force replay
+        if (state.sentences.length > 0) {
+            playCurrent();
+        }
+    }
+
+    function togglePunc() {
+        state.readPunctuation = !state.readPunctuation;
+        els.puncBtn.classList.toggle('active', state.readPunctuation);
+        state.audioCache = {}; 
+        
+        // Force replay
+        if (state.sentences.length > 0) {
+            playCurrent();
+        }
+    }
+
+    // --- CORE LOGIC: Text Pre-processing ---
+    
+    function convertChineseNumber(num) {
+        const digits = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+        if (num <= 10) return digits[num];
+        if (num < 20) return '十' + digits[num % 10];
+        return num; 
+    }
+
+    function prepareTextForSpeech(text, index, isZh) {
+        let processed = text;
+        const numVal = index + 1;
+
+        if (isZh) {
+            const prefix = `第${convertChineseNumber(numVal)}`;
+            if (state.readPunctuation) {
+                processed = processed
+                    .replace(/，/g, '逗號，')
+                    .replace(/。/g, '句號。')
+                    .replace(/？/g, '問號？')
+                    .replace(/！/g, '感嘆號！');
             }
+            return `${prefix}。${processed}`;
         } else {
-            if (wordByWordMode) {
-                textToSpeak = buildWordByWordSentence(original);
+            let workingText = processed;
+            
+            if (state.readPunctuation) {
+                workingText = workingText
+                    .replace(/\./g, ' Full Stop ')
+                    .replace(/,/g, ' Comma ')
+                    .replace(/\?/g, ' Question Mark ')
+                    .replace(/!/g, ' Exclamation Mark ');
             } else {
-                textToSpeak = original;
+                workingText = workingText.replace(/[.,?!]/g, ' ');
+            }
+
+            workingText = workingText.replace(/\s+/g, ' ').trim();
+
+            if (state.isWBW) {
+                const words = workingText.split(' ');
+                const wbwPrefix = `Number. ${numVal}.`;
+                const wbwBody = words.map(w => w + ".").join(" ");
+                return `${wbwPrefix} ${wbwBody}`;
+            } else {
+                return `Number ${numVal}. ${workingText}`;
             }
         }
-        return textToSpeak;
     }
 
-    function playCurrentWord() {
-        window.speechSynthesis.cancel();
-        
-        const text = buildSpeakText(currentIndex);
-        const u = new SpeechSynthesisUtterance(text);
-        
-        if(englishVoice) u.voice = englishVoice;
-        
-        u.rate = playbackSpeed;
-        u.lang = 'en-GB'; // Fallback
-
-        u.onstart = () => {
-            isPlaying = true;
-            updateStatus('Playing...');
-            updateRepeatBtnUI(true);
-        };
-
-        u.onend = () => {
-            isPlaying = false;
-            updateStatus('Ready');
-            updateRepeatBtnUI(false);
-        };
-        
-        u.onerror = (e) => {
-            console.error(e);
-            isPlaying = false;
-            updateStatus('Error');
-            updateRepeatBtnUI(false);
-        };
-
-        window.speechSynthesis.speak(u);
+    function getCacheKey(index, isWBW, readPunc) {
+        return `${index}_${isWBW ? 'wbw' : 'norm'}_${readPunc}`;
     }
 
-    function updateStatus(msg) {
-        document.getElementById('statusText').textContent = msg;
+    // --- Logic: Audio Core ---
+    async function playCurrent() {
+        stopAudio();
+        unlockAudio(); 
+        
+        const textObj = state.sentences[state.currentIndex];
+        const isZh = state.langMode === 'zh';
+        
+        const speakText = prepareTextForSpeech(textObj.clean, state.currentIndex, isZh);
+        
+        els.status.textContent = "Preparing...";
+        setPlayBtnState('loading');
+
+        if (isZh) {
+            playCantonese(speakText);
+        } else {
+            const key = getCacheKey(state.currentIndex, state.isWBW, state.readPunctuation);
+            let audioUrl = state.audioCache[key];
+
+            if (!audioUrl) {
+                const timeoutPromise = new Promise(resolve => {
+                    fetchTimeoutId = setTimeout(() => {
+                        console.warn("Fetch timed out, using fallback");
+                        resolve("fallback");
+                    }, 15000); 
+                });
+
+                const fetchPromise = fetchElevenLabsAudio(speakText);
+                
+                audioUrl = await Promise.race([fetchPromise, timeoutPromise]);
+                clearTimeout(fetchTimeoutId);
+                
+                state.audioCache[key] = audioUrl;
+            }
+
+            playEnglishAudio(audioUrl, speakText);
+            
+            if (state.currentIndex + 1 < state.sentences.length) {
+                const nextText = prepareTextForSpeech(state.sentences[state.currentIndex+1].clean, state.currentIndex+1, false);
+                const nextKey = getCacheKey(state.currentIndex + 1, state.isWBW, state.readPunctuation);
+                if(!state.audioCache[nextKey]) {
+                    fetchElevenLabsAudio(nextText).then(url => state.audioCache[nextKey] = url);
+                }
+            }
+        }
     }
 
-    function updateRepeatBtnUI(isStop) {
-        const icon = document.getElementById('repeatIcon');
-        const text = document.getElementById('repeatText');
-        if(isStop) {
+    function playCantonese(text) {
+        synth.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'zh-HK'; 
+        utterance.rate = state.speed; 
+        
+        utterance.onstart = () => {
+            state.isPlaying = true;
+            els.status.textContent = "Playing (Cantonese)...";
+            setPlayBtnState('stop');
+        };
+        utterance.onend = () => {
+            state.isPlaying = false;
+            els.status.textContent = "Finished";
+            setPlayBtnState('repeat');
+        };
+        synth.speak(utterance);
+    }
+
+    async function fetchElevenLabsAudio(text) {
+        if (window.Poe && window.Poe.sendUserMessage) {
+            return new Promise((resolve) => {
+                const handlerName = `audio-${Date.now()}-${Math.random()}`;
+                
+                // --- FIX 1: Bot Name & Prompt Format ---
+                // Updated to match your screenshot exactly.
+                const botName = "@ElevenLabs-v2.5-Turbo"; 
+                
+                // Format: "Text --voice Lily"
+                const cleanPrompt = `${botName} ${text} --voice Lily`;
+
+                window.Poe.registerHandler(handlerName, (result) => {
+                    if (result.responses[0].status === "complete") {
+                        if (result.responses[0].attachments && result.responses[0].attachments.length > 0) {
+                            resolve(result.responses[0].attachments[0].url);
+                        } else {
+                            resolve("fallback");
+                        }
+                    } else if (result.responses[0].status === "error") {
+                        resolve("fallback");
+                    }
+                });
+
+                window.Poe.sendUserMessage(cleanPrompt, { handler: handlerName, openChat: false })
+                    .catch(() => resolve("fallback"));
+            });
+        } else {
+            return new Promise(r => setTimeout(() => r("fallback"), 500));
+        }
+    }
+
+    function playEnglishAudio(url, fallbackText) {
+        if (url === "fallback") {
+            let cleanText = fallbackText;
+            const u = new SpeechSynthesisUtterance(cleanText);
+            u.lang = 'en-US'; 
+            u.rate = state.isWBW ? (state.speed * 0.8) : state.speed; 
+
+            u.onstart = () => {
+                state.isPlaying = true;
+                els.status.textContent = "Playing (Browser Voice)...";
+                setPlayBtnState('stop');
+            };
+            u.onend = () => {
+                state.isPlaying = false;
+                els.status.textContent = "Finished";
+                setPlayBtnState('repeat');
+            };
+            synth.speak(u);
+            currentAudioObj = { pause: () => synth.cancel(), currentTime: 0 };
+        } else {
+            currentAudioObj = new Audio(url);
+            currentAudioObj.playbackRate = state.speed; 
+
+            let playStarted = false;
+            
+            currentAudioObj.onplay = () => {
+                playStarted = true;
+                state.isPlaying = true;
+                els.status.textContent = `Playing (Lily)...`;
+                setPlayBtnState('stop');
+            };
+            
+            currentAudioObj.onended = () => {
+                state.isPlaying = false;
+                els.status.textContent = "Finished";
+                setPlayBtnState('repeat');
+            };
+            
+            currentAudioObj.onerror = () => {
+                 console.error("Audio Load Error");
+                 playEnglishAudio("fallback", fallbackText);
+            };
+            
+            const playPromise = currentAudioObj.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    console.error("Auto-play prevented:", error);
+                    els.status.textContent = "Click Play to start";
+                    setPlayBtnState('repeat'); 
+                });
+            }
+
+            setTimeout(() => {
+                if(!playStarted && !currentAudioObj.paused && currentAudioObj.duration > 0) {
+                    state.isPlaying = true;
+                    els.status.textContent = `Playing (Lily)...`;
+                    setPlayBtnState('stop');
+                }
+            }, 500);
+        }
+    }
+
+    function stopAudio() {
+        if(fetchTimeoutId) clearTimeout(fetchTimeoutId);
+        
+        if (state.langMode === 'zh') synth.cancel();
+        else {
+            if (currentAudioObj) {
+                if(currentAudioObj.pause) currentAudioObj.pause();
+                else synth.cancel(); 
+            }
+        }
+        state.isPlaying = false;
+    }
+
+    function handleCenterButton() {
+        if (state.isPlaying) {
+            stopAudio();
+            setPlayBtnState('repeat'); 
+            els.status.textContent = "Stopped";
+        } else {
+            playCurrent();
+        }
+    }
+
+    function setPlayBtnState(mode) {
+        const icon = els.centerBtn.querySelector('.icon');
+        const label = els.centerBtn.querySelector('.label');
+        els.centerBtn.className = 'ctrl-btn btn-play'; 
+
+        if (mode === 'stop') {
             icon.textContent = '⏹';
-            text.textContent = 'Stop';
-        } else {
+            label.textContent = 'Stop';
+            els.centerBtn.classList.add('stop-mode');
+        } else if (mode === 'repeat') {
             icon.textContent = '🔁';
-            text.textContent = 'Repeat';
-        }
-    }
-
-    function repeatWord() {
-        if (isPlaying) {
-            window.speechSynthesis.cancel();
-            isPlaying = false;
-            updateStatus('Stopped');
-            updateRepeatBtnUI(false);
+            label.textContent = 'Repeat';
+            els.centerBtn.classList.add('repeat-mode');
+        } else if (mode === 'loading') {
+            icon.textContent = '⏳';
+            label.textContent = 'Loading';
+            els.centerBtn.disabled = true;
         } else {
-            playCurrentWord();
+            icon.textContent = '▶️';
+            label.textContent = 'Play';
         }
+        if (mode !== 'loading') els.centerBtn.disabled = false;
     }
 
-    function previousWord() {
-        window.speechSynthesis.cancel();
-        if (currentIndex > 0) {
-            currentIndex--;
-            updateDisplay();
-            setTimeout(() => playCurrentWord(), 300);
-        }
-    }
+    init();
 
-    function nextWord() {
-        window.speechSynthesis.cancel();
-        currentIndex++;
-        if (currentIndex >= words.length) {
-            document.getElementById('practiceSection').classList.remove('active');
-            document.getElementById('completeSection').classList.add('active');
-        } else {
-            updateDisplay();
-            setTimeout(() => playCurrentWord(), 300);
-        }
-    }
-
-    function restartSpelling() {
-        currentIndex = 0;
-        document.getElementById('completeSection').classList.remove('active');
-        document.getElementById('practiceSection').classList.add('active');
-        updateDisplay();
-        setTimeout(() => playCurrentWord(), 300);
-    }
-
-    function goToMainPage() {
-        window.speechSynthesis.cancel();
-        document.getElementById('practiceSection').classList.remove('active');
-        document.getElementById('completeSection').classList.remove('active');
-        document.getElementById('setupSection').style.display = 'block';
-    }
 </script>
 </body>
 </html>
