@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>中英閃卡 v4.0 (多學生+全方位移動版)</title>
+<title>中英閃卡 v4.2 (樹狀目錄+UI優化版)</title>
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;900&family=Noto+Serif+HK:wght@500;700;900&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -227,9 +227,12 @@ body.hide-text-mode .word-tag i {
     text-shadow: 1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff;
 }
 
+/* --- UI 修改: 間距與按鈕位置 --- */
 .controls-grid {
-    display: grid; grid-template-columns: 1fr 0.4fr 1fr; gap: 10px;
+    /* 1. 交換了左右按鈕的順序 (HTML中修改) */
+    display: grid; grid-template-columns: 1fr 0.4fr 1fr; gap: 20px; /* 3. 增加間距 */
     width: 100%; max-width: 600px; z-index: 20; flex-shrink: 0;
+    margin-bottom: 25px; /* 3. 增加底部間距 */
 }
 
 .big-btn {
@@ -250,17 +253,22 @@ body.hide-text-mode .word-tag i {
 
 .btn-master { background: var(--btn-master); box-shadow: 0 5px 0 #43a047; }
 
+/* 2. 導航按鈕縮短並置中 */
 .nav-row {
-    display: flex; gap: 15px; width: 100%; max-width: 600px; margin-top: 10px;
+    display: flex; gap: 25px; width: 100%; max-width: 600px; 
+    margin-top: 20px; margin-bottom: 10px; /* 3. 增加間距 */
+    justify-content: center;
 }
 .nav-btn {
-    flex: 1; background: #fff; color: var(--text-primary); border: 2px solid #cfd8dc;
+    flex: none; width: 130px; /* 固定寬度 */
+    background: #fff; color: var(--text-primary); border: 2px solid #cfd8dc;
     box-shadow: 0 5px 0 #b0bec5; font-size: 1rem; padding: 10px;
 }
 
 .toggles-area {
-    margin-top: 10px; display: flex; gap: 15px; background: rgba(255,255,255,0.6);
-    padding: 8px 20px; border-radius: 16px; flex-wrap: wrap; justify-content: center; flex-shrink: 0;
+    margin-top: 15px; /* 3. 增加間距 */
+    display: flex; gap: 15px; background: rgba(255,255,255,0.6);
+    padding: 12px 20px; border-radius: 16px; flex-wrap: wrap; justify-content: center; flex-shrink: 0;
 }
 .toggle-item { display: flex; align-items: center; gap: 6px; font-weight: bold; font-size: 0.9rem; cursor: pointer; }
 .toggle-item input { accent-color: var(--accent); width: 20px; height: 20px; }
@@ -279,6 +287,12 @@ body.hide-text-mode .word-tag i {
     color: #78909c; font-weight: bold; pointer-events: none; z-index: 1000;
     display: flex; align-items: center; gap: 6px; opacity: 0; transition: opacity 0.3s;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #eceff1;
+}
+
+.version-tag {
+    position: fixed; bottom: 5px; right: 8px; font-size: 0.65rem;
+    color: #b0bec5; font-weight: bold; z-index: 5000; pointer-events: none;
+    font-family: var(--font-ui);
 }
 
 /* Modal */
@@ -305,6 +319,38 @@ body.hide-text-mode .word-tag i {
 .btn-save { background: var(--accent); color: white; }
 .btn-paste { background: var(--import-btn); color: #333; }
 .btn-no { background: #eceff1; color: #455a64; }
+.btn-danger { background: var(--danger); color: white; }
+
+/* Profile Manager Styles (Tree Structure) */
+.profile-list-container {
+    max-height: 50vh; overflow-y: auto; margin: 10px 0;
+    border: 1px solid #eee; border-radius: 12px; padding: 5px;
+}
+.profile-row {
+    display: flex; align-items: center; gap: 5px; padding: 8px;
+    background: #f9f9f9; border-radius: 8px; margin-bottom: 6px;
+    border: 1px solid #eee;
+}
+.profile-row.is-folder { background: #e3f2fd; border-color: #bbdefb; }
+.profile-row.active-profile { border-color: var(--accent); background: #fff3e0; }
+
+.tree-indent { width: 20px; flex-shrink: 0; display: inline-block; }
+
+.profile-name-input {
+    flex: 1; border: 1px solid transparent; background: transparent;
+    font-size: 1rem; font-weight: bold; color: #333; padding: 4px;
+    border-radius: 4px; font-family: var(--font-ui);
+}
+.profile-name-input:focus { background: #fff; border-color: var(--accent); outline: none; }
+
+.profile-action-btn {
+    width: 30px; height: 30px; border-radius: 6px; border: none;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 0.9rem; flex-shrink: 0;
+}
+.btn-move { background: #eceff1; color: #546e7a; }
+.btn-del { background: #ffebee; color: #c62828; }
+.btn-folder { background: #e1f5fe; color: #0288d1; }
 
 /* New Settings Grid */
 .settings-grid {
@@ -357,7 +403,7 @@ body.hide-text-mode .word-tag i {
     .word-grid { grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); }
     .flashcard { max-height: 30vh; }
     .word-display { font-size: 6rem; }
-    .controls-grid { margin-bottom: 5px; }
+    .controls-grid { margin-bottom: 20px; }
     .card-info-bl, .card-info-br { font-size: 1.5rem; bottom: 10px; }
 }
 
@@ -372,6 +418,7 @@ body.hide-text-mode .word-tag i {
 <body>
 
     <canvas id="confetti-canvas"></canvas>
+    <div class="version-tag">v4.2</div>
 
     <div class="main-layout">
         <div class="sidebar">
@@ -381,7 +428,8 @@ body.hide-text-mode .word-tag i {
                 <select id="profileSelect" class="profile-select" onchange="switchProfile(this.value)">
                     <option value="default">預設學生</option>
                 </select>
-                <button class="profile-btn" onclick="openProfileModal()">+</button>
+                <!-- 管理按鈕 -->
+                <button class="profile-btn" onclick="openProfileManager()">⚙️</button>
             </div>
 
             <!-- 詞語表 -->
@@ -390,6 +438,8 @@ body.hide-text-mode .word-tag i {
                     <div class="panel-title">
                         <span>📖 詞語表 <small id="wordCount">(0)</small></span>
                         <div id="wordSelectControls" class="mode-controls">
+                            <!-- 4. 全選按鈕 -->
+                            <button class="mode-btn" style="background:#78909c" onclick="toggleSelectAll('#wordList')">全選</button>
                             <button class="mode-btn" style="background:var(--review-color)" onclick="confirmBatchMoveFromWordsToReview()">移至還要練</button>
                             <button class="mode-btn" style="background:var(--btn-master)" onclick="confirmBatchMove()">移至已學識</button>
                             <button class="mode-btn" style="background:#cfd8dc; color:#555" onclick="exitWordSelectMode()">取消</button>
@@ -407,6 +457,8 @@ body.hide-text-mode .word-tag i {
                     <div class="panel-title">
                         <span>💪 還要練 <small id="reviewCount">(0)</small></span>
                         <div id="reviewControls" class="mode-controls">
+                            <!-- 4. 全選按鈕 -->
+                            <button class="mode-btn" style="background:#78909c" onclick="toggleSelectAll('#reviewList')">全選</button>
                             <button class="mode-btn" style="background:var(--btn-speak)" onclick="confirmBatchMoveFromReviewToWords()">退回詞語表</button>
                             <button class="mode-btn" style="background:var(--btn-master)" onclick="confirmBatchMoveFromReviewToMastered()">晉級已學識</button>
                             <button class="mode-btn" style="background:#cfd8dc; color:#555" onclick="exitReviewMode()">取消</button>
@@ -424,6 +476,8 @@ body.hide-text-mode .word-tag i {
                     <div class="panel-title">
                         <span>🏆 已學識 <small id="masteredCount">(0)</small></span>
                         <div id="deleteControls" class="mode-controls">
+                            <!-- 4. 全選按鈕 -->
+                            <button class="mode-btn" style="background:#78909c" onclick="toggleSelectAll('#masteredList')">全選</button>
                             <button class="mode-btn" style="background:var(--btn-speak)" onclick="confirmBatchRestore()">還原詞語表</button>
                             <button class="mode-btn" style="background:var(--review-color)" onclick="confirmBatchMoveFromMasteredToReview()">移至還要練</button>
                             <button class="mode-btn" style="background:var(--danger)" onclick="confirmBatchDelete()">刪除</button>
@@ -458,12 +512,14 @@ body.hide-text-mode .word-tag i {
             </div>
 
             <div class="controls-grid">
-                <button class="big-btn btn-speak" id="speakBtn" onclick="toggleSpeak()">🔊 朗讀</button>
-                <button class="big-btn btn-record" id="recordBtn">🎤</button>
+                <!-- 1. 按鈕位置互換: 綠色在左，藍色在右 -->
                 <button class="big-btn btn-master" id="masteredBtn" onclick="handleMasteryClick(event)">✅ 我識讀!</button>
+                <button class="big-btn btn-record" id="recordBtn">🎤</button>
+                <button class="big-btn btn-speak" id="speakBtn" onclick="toggleSpeak()">🔊 朗讀</button>
             </div>
 
             <div class="nav-row">
+                <!-- 2. 按鈕縮短並置中 -->
                 <button class="big-btn nav-btn" id="prevBtn" onclick="manualPrev()">👈 上一個</button>
                 <button class="big-btn nav-btn" id="nextBtn" onclick="manualNext()">下一個 👉</button>
             </div>
@@ -480,17 +536,42 @@ body.hide-text-mode .word-tag i {
     <div id="saveStatus" class="save-status">☁️ 準備中...</div>
     <div id="toast" class="toast">提示訊息</div>
 
-    <!-- 學生管理視窗 -->
-    <div id="profileModal" class="custom-modal">
+    <!-- 學生管理視窗 (樹狀目錄版) -->
+    <div id="profileManagerModal" class="custom-modal">
         <div class="modal-content">
-            <div class="modal-title">👤 新增學生</div>
-            <input type="text" id="newProfileName" class="import-textarea" style="height:50px; text-align:center;" placeholder="輸入學生名字 (例如: 細佬)">
-            <div class="modal-actions">
-                <button class="modal-btn btn-save" onclick="addNewProfile()">✨ 建立</button>
-                <button class="modal-btn btn-no" onclick="closeModal('profileModal')">取消</button>
+            <div class="modal-title">👤 學生與目錄管理</div>
+            <p style="font-size:0.85rem; color:#888; margin-bottom:10px;">建立資料夾分類，或直接管理學生</p>
+            
+            <div id="profileListContainer" class="profile-list-container">
+                <!-- JS 生成樹狀列表 -->
             </div>
-            <hr style="margin:15px 0; border:0; border-top:1px solid #eee;">
-            <div style="font-size:0.85rem; color:#888;">如要刪除學生，請在設定頁面操作。</div>
+
+            <div class="modal-actions" style="margin-top:5px;">
+                <button class="modal-btn btn-folder" onclick="openAddFolderModal()">📁 新增目錄</button>
+                <button class="modal-btn btn-save" onclick="openAddProfileModal()">➕ 新增學生</button>
+                <button class="modal-btn btn-no" onclick="closeModal('profileManagerModal')">完成</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增學生/目錄視窗 -->
+    <div id="addProfileModal" class="custom-modal" style="z-index: 3100;">
+        <div class="modal-content">
+            <div class="modal-title" id="addModalTitle">➕ 新增學生</div>
+            <input type="text" id="newProfileNameInput" class="import-textarea" style="height:50px; text-align:center;" placeholder="輸入名字">
+            
+            <!-- 5. 選擇父目錄 -->
+            <div style="margin-top:10px; text-align:left;">
+                <label style="font-size:0.85rem; color:#666; font-weight:bold;">位置 (父目錄):</label>
+                <select id="parentFolderSelect" class="profile-select" style="width:100%; margin-top:5px;">
+                    <option value="">(根目錄)</option>
+                </select>
+            </div>
+
+            <div class="modal-actions">
+                <button class="modal-btn btn-save" onclick="confirmAddProfileOrFolder()">建立</button>
+                <button class="modal-btn btn-no" onclick="closeModal('addProfileModal')">取消</button>
+            </div>
         </div>
     </div>
 
@@ -539,9 +620,6 @@ body.hide-text-mode .word-tag i {
                 <button class="btn-setting-action" style="background:#ff9800;" onclick="confirmAction('clearAudio')">
                     <span>🗑️ 清除錄音</span><span style="font-size:0.7rem; opacity:0.8; font-weight:normal">保留文字</span>
                 </button>
-                <button class="btn-setting-action" style="background:#ef5350;" onclick="confirmAction('deleteProfile')">
-                    <span>❌ 刪除學生</span><span style="font-size:0.7rem; opacity:0.8; font-weight:normal">刪除當前學生</span>
-                </button>
             </div>
             <div class="modal-actions" style="margin-top: 20px;">
                 <button class="modal-btn btn-no" onclick="closeModal('settingsModal')">關閉</button>
@@ -567,9 +645,16 @@ body.hide-text-mode .word-tag i {
         let reviewWords = [];
         let masteredWords = [];
         
-        // 多學生系統
-        let profiles = JSON.parse(localStorage.getItem('flashcard_profiles')) || [{id: 'default', name: '預設學生'}];
+        // 多學生系統 (支援樹狀結構)
+        // Profile Object: { id, name, parentId: string|null, isFolder: boolean }
+        let profiles = JSON.parse(localStorage.getItem('flashcard_profiles')) || [{id: 'default', name: '預設學生', parentId: null, isFolder: false}];
         let currentProfileId = localStorage.getItem('flashcard_current_profile') || 'default';
+
+        // 確保舊資料有 parentId
+        profiles.forEach(p => {
+            if(p.parentId === undefined) p.parentId = null;
+            if(p.isFolder === undefined) p.isFolder = false;
+        });
 
         const initialWords = ["都是", "Apple", "這個", "Banana", "合成", "Orange", "共有"];
         const initialReview = [];
@@ -603,51 +688,288 @@ body.hide-text-mode .word-tag i {
         let saveTimeout = null;
         let mediaUnlocked = false;
 
+        let isAddingFolder = false; // 狀態標記
+
         // --- 輔助函數 ---
         function getDBKey(type) {
             return `${currentProfileId}_${type}`;
         }
 
+        // 遞歸構建樹狀選項
+        function buildProfileOptions(parentId, depth) {
+            const children = profiles.filter(p => p.parentId === parentId);
+            let options = [];
+            children.forEach(p => {
+                if(p.isFolder) {
+                    // 資料夾不可選為當前用戶，但為了顯示結構，可以加 disabled
+                    // 這裡我們只顯示學生在下拉選單，但要顯示路徑嗎？
+                    // 簡單做法：只顯示學生，但名稱帶縮排
+                    // 更好的做法：顯示 Folder > Student
+                    // V4.2 簡化：下拉選單只顯示可選的學生，用縮排表示層級
+                    const subOptions = buildProfileOptions(p.id, depth + 1);
+                    options = options.concat(subOptions);
+                } else {
+                    const indent = "&nbsp;&nbsp;".repeat(depth);
+                    const folderIcon = depth > 0 ? "└ " : "";
+                    options.push({
+                        value: p.id,
+                        text: `${indent}${folderIcon}${p.name}`
+                    });
+                }
+            });
+            return options;
+        }
+
+        // 構建用於「選擇父目錄」的選項
+        function buildFolderOptions(parentId, depth, excludeId = null) {
+            const children = profiles.filter(p => p.parentId === parentId && p.isFolder && p.id !== excludeId);
+            let html = '';
+            children.forEach(p => {
+                const indent = "&nbsp;&nbsp;".repeat(depth);
+                const icon = "📁 ";
+                html += `<option value="${p.id}">${indent}${icon}${p.name}</option>`;
+                html += buildFolderOptions(p.id, depth + 1, excludeId);
+            });
+            return html;
+        }
+
         function updateProfileSelectUI() {
             const select = document.getElementById('profileSelect');
             select.innerHTML = '';
-            profiles.forEach(p => {
-                const opt = document.createElement('option');
-                opt.value = p.id;
-                opt.textContent = p.name;
-                if(p.id === currentProfileId) opt.selected = true;
-                select.appendChild(opt);
-            });
+            
+            // 遞歸渲染所有學生 (扁平化顯示樹)
+            // 為了讓下拉選單好用，我們遍歷樹
+            
+            function renderTreeOptions(pid, depth) {
+                const items = profiles.filter(p => p.parentId === pid);
+                // 先排資料夾，再排學生
+                items.sort((a,b) => (a.isFolder === b.isFolder) ? 0 : a.isFolder ? -1 : 1);
+
+                items.forEach(item => {
+                    if(item.isFolder) {
+                        // 資料夾本身不能選為當前用戶，做成 disabled option 當標題
+                        const opt = document.createElement('option');
+                        opt.disabled = true;
+                        opt.innerHTML = "&nbsp;&nbsp;".repeat(depth) + "📁 " + item.name;
+                        select.appendChild(opt);
+                        renderTreeOptions(item.id, depth + 1);
+                    } else {
+                        const opt = document.createElement('option');
+                        opt.value = item.id;
+                        opt.innerHTML = "&nbsp;&nbsp;".repeat(depth) + (depth>0?"└ ":"") + item.name;
+                        if(item.id === currentProfileId) opt.selected = true;
+                        select.appendChild(opt);
+                    }
+                });
+            }
+            renderTreeOptions(null, 0);
         }
 
-        function openProfileModal() { document.getElementById('profileModal').style.display = 'flex'; document.getElementById('newProfileName').focus(); }
-        
-        function addNewProfile() {
-            const name = document.getElementById('newProfileName').value.trim();
-            if(!name) return;
-            const id = 'student_' + Date.now();
-            profiles.push({id, name});
+        // --- 學生管理系統 (樹狀結構) ---
+        function openProfileManager() {
+            renderProfileManagerList();
+            document.getElementById('profileManagerModal').style.display = 'flex';
+        }
+
+        function renderProfileManagerList() {
+            const container = document.getElementById('profileListContainer');
+            container.innerHTML = '';
+            
+            function renderNode(pid, depth) {
+                const items = profiles.filter(p => p.parentId === pid);
+                // 排序：資料夾優先
+                items.sort((a,b) => (a.isFolder === b.isFolder) ? 0 : a.isFolder ? -1 : 1);
+
+                items.forEach(p => {
+                    const row = document.createElement('div');
+                    row.className = 'profile-row';
+                    if(p.isFolder) row.classList.add('is-folder');
+                    if(p.id === currentProfileId) row.classList.add('active-profile');
+
+                    // 縮排
+                    for(let i=0; i<depth; i++) {
+                        const indent = document.createElement('span');
+                        indent.className = 'tree-indent';
+                        row.appendChild(indent);
+                    }
+
+                    // Icon
+                    const icon = document.createElement('span');
+                    icon.style.marginRight = '5px';
+                    icon.textContent = p.isFolder ? '📁' : '👤';
+                    row.appendChild(icon);
+
+                    // 名字輸入框
+                    const input = document.createElement('input');
+                    input.className = 'profile-name-input';
+                    input.value = p.name;
+                    input.onchange = (e) => renameProfile(p.id, e.target.value);
+                    row.appendChild(input);
+
+                    // 編輯父目錄按鈕 (取代上下移)
+                    const editBtn = document.createElement('button');
+                    editBtn.className = 'profile-action-btn btn-move';
+                    editBtn.innerHTML = '✏️'; // 編輯/移動
+                    editBtn.onclick = () => openEditProfileModal(p.id);
+                    row.appendChild(editBtn);
+
+                    // 刪除按鈕
+                    const delBtn = document.createElement('button');
+                    delBtn.className = 'profile-action-btn btn-del';
+                    delBtn.innerHTML = '❌';
+                    delBtn.onclick = () => deleteProfileSpecific(p.id);
+                    row.appendChild(delBtn);
+
+                    container.appendChild(row);
+
+                    if(p.isFolder) {
+                        renderNode(p.id, depth + 1);
+                    }
+                });
+            }
+            renderNode(null, 0);
+        }
+
+        function renameProfile(id, newName) {
+            const p = profiles.find(x => x.id === id);
+            if(p && newName.trim()) {
+                p.name = newName.trim();
+                saveProfiles();
+                updateProfileSelectUI();
+            } else {
+                renderProfileManagerList();
+            }
+        }
+
+        function deleteProfileSpecific(id) {
+            const p = profiles.find(x => x.id === id);
+            if(p.isFolder) {
+                // 檢查是否有子項目
+                const hasChildren = profiles.some(child => child.parentId === id);
+                if(hasChildren) {
+                    showToast("目錄不為空，無法刪除");
+                    return;
+                }
+            } else {
+                if(profiles.filter(x => !x.isFolder).length <= 1) {
+                    showToast("最少要保留一個學生");
+                    return;
+                }
+            }
+
+            if(!confirm(`確定要刪除「${p.name}」嗎？`)) return;
+
+            const isCurrent = (p.id === currentProfileId);
+            const idx = profiles.findIndex(x => x.id === id);
+            profiles.splice(idx, 1);
+            saveProfiles();
+            
+            if(isCurrent) {
+                // 切換到第一個非資料夾的學生
+                const next = profiles.find(x => !x.isFolder);
+                if(next) switchProfile(next.id);
+            } else {
+                updateProfileSelectUI();
+            }
+            renderProfileManagerList();
+            showToast("已刪除");
+        }
+
+        function saveProfiles() {
             localStorage.setItem('flashcard_profiles', JSON.stringify(profiles));
-            switchProfile(id);
-            closeModal('profileModal');
-            document.getElementById('newProfileName').value = '';
-            showToast(`已建立新學生：${name}`);
+        }
+
+        // --- 新增/編輯 Modal ---
+        let editingProfileId = null;
+
+        function openAddProfileModal() {
+            isAddingFolder = false;
+            editingProfileId = null;
+            document.getElementById('addModalTitle').textContent = "➕ 新增學生";
+            document.getElementById('newProfileNameInput').value = '';
+            updateParentFolderSelect(null);
+            document.getElementById('addProfileModal').style.display = 'flex';
+            document.getElementById('newProfileNameInput').focus();
+        }
+
+        function openAddFolderModal() {
+            isAddingFolder = true;
+            editingProfileId = null;
+            document.getElementById('addModalTitle').textContent = "📁 新增目錄";
+            document.getElementById('newProfileNameInput').value = '';
+            updateParentFolderSelect(null);
+            document.getElementById('addProfileModal').style.display = 'flex';
+            document.getElementById('newProfileNameInput').focus();
+        }
+
+        function openEditProfileModal(id) {
+            const p = profiles.find(x => x.id === id);
+            if(!p) return;
+            editingProfileId = id;
+            isAddingFolder = p.isFolder;
+            document.getElementById('addModalTitle').textContent = p.isFolder ? "✏️ 編輯目錄" : "✏️ 編輯學生";
+            document.getElementById('newProfileNameInput').value = p.name;
+            updateParentFolderSelect(p.parentId, p.id); // 傳入 excludeId 防止選自己為父
+            document.getElementById('addProfileModal').style.display = 'flex';
+        }
+
+        function updateParentFolderSelect(selectedId, excludeId = null) {
+            const sel = document.getElementById('parentFolderSelect');
+            sel.innerHTML = '<option value="">(根目錄)</option>' + buildFolderOptions(null, 0, excludeId);
+            if(selectedId) sel.value = selectedId;
+            else sel.value = "";
+        }
+
+        function confirmAddProfileOrFolder() {
+            const name = document.getElementById('newProfileNameInput').value.trim();
+            const parentId = document.getElementById('parentFolderSelect').value || null;
+            
+            if(!name) return;
+
+            if(editingProfileId) {
+                // 編輯模式
+                const p = profiles.find(x => x.id === editingProfileId);
+                if(p) {
+                    p.name = name;
+                    p.parentId = parentId;
+                    saveProfiles();
+                    updateProfileSelectUI();
+                    renderProfileManagerList();
+                    showToast("已更新");
+                }
+            } else {
+                // 新增模式
+                const id = (isAddingFolder ? 'folder_' : 'student_') + Date.now();
+                profiles.push({
+                    id: id,
+                    name: name,
+                    parentId: parentId,
+                    isFolder: isAddingFolder
+                });
+                saveProfiles();
+                
+                if(!isAddingFolder) {
+                    switchProfile(id);
+                }
+                updateProfileSelectUI();
+                renderProfileManagerList();
+                showToast(isAddingFolder ? "已建立目錄" : "已建立學生");
+            }
+            closeModal('addProfileModal');
         }
 
         async function switchProfile(newId) {
             if(newId === currentProfileId) return;
-            // 先儲存當前
             if(isDirty) {
                 await new Promise(resolve => {
                     saveDataToDB();
-                    setTimeout(resolve, 500); // 簡單等待寫入
+                    setTimeout(resolve, 500);
                 });
             }
             
             currentProfileId = newId;
             localStorage.setItem('flashcard_current_profile', currentProfileId);
             
-            // 重置狀態
             words = []; reviewWords = []; masteredWords = [];
             currentIndex = 0;
             currentRoundId = 1;
@@ -657,7 +979,23 @@ body.hide-text-mode .word-tag i {
             updateProfileSelectUI();
             renderLists();
             updateCard();
+            
+            if(document.getElementById('profileManagerModal').style.display === 'flex') {
+                renderProfileManagerList();
+            }
             showToast("已切換學生檔案");
+        }
+
+        // --- 4. 全選功能 ---
+        function toggleSelectAll(selector) {
+            const checkboxes = document.querySelectorAll(`${selector} .select-checkbox`);
+            if(checkboxes.length === 0) return;
+            
+            // 檢查是否已全選
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            
+            // 反轉狀態
+            checkboxes.forEach(cb => cb.checked = !allChecked);
         }
 
         // --- 音頻解鎖 ---
@@ -723,27 +1061,19 @@ body.hide-text-mode .word-tag i {
                 const transaction = db.transaction(['data'], 'readonly');
                 const store = transaction.objectStore('data');
                 
-                // 兼容舊版：如果 currentProfileId 是 'default'，我們嘗試讀取舊版 key ('words')
-                // 如果是新學生，讀取 'studentID_words'
                 let keyPrefix = currentProfileId === 'default' ? '' : (currentProfileId + '_');
-                // 如果是 default 但沒有 prefix，就用純 'words'。如果是 default 但有 prefix (未來)，就用 prefix。
-                // 為了簡單，v4.0 邏輯：
-                // 1. 嘗試讀取 `${currentProfileId}_words`
-                // 2. 如果是 default 且讀不到，嘗試讀取 `words` (遷移舊資料)
                 
                 const getWords = store.get(getDBKey('words'));
                 const getReview = store.get(getDBKey('review'));
                 const getMastered = store.get(getDBKey('mastered'));
                 const getSettings = store.get(getDBKey('settings'));
                 
-                // 舊版兼容讀取
                 const getOldWords = store.get('words');
                 const getOldReview = store.get('review');
                 const getOldMastered = store.get('mastered');
                 const getOldSettings = store.get('settings');
 
                 transaction.oncomplete = () => {
-                    // 優先使用帶 ID 的資料
                     if (getWords.result) words = getWords.result.value;
                     else if (currentProfileId === 'default' && getOldWords.result) words = getOldWords.result.value;
                     else words = (currentProfileId === 'default') ? [...initialWords].map(w => ({ text: w, views: 0, hits: 0, audioBlob: null, roundId: 0 })) : [];
@@ -779,8 +1109,6 @@ body.hide-text-mode .word-tag i {
                     store.put({ id: getDBKey('mastered'), value: masteredWords });
                     store.put({ id: getDBKey('settings'), value: settings });
                     
-                    // 如果是 default，為了安全也更新舊 key (可選，但為了乾淨，v4.0 開始我們主要依賴帶 ID 的 key，
-                    // 不過為了防止回滾版本導致資料丟失，我們可以同時寫入舊 key 如果是 default)
                     if (currentProfileId === 'default') {
                         store.put({ id: 'words', value: words });
                         store.put({ id: 'review', value: reviewWords });
@@ -810,7 +1138,7 @@ body.hide-text-mode .word-tag i {
         // --- 初始化 ---
         async function init() {
             initGestureUnlock();
-            updateProfileSelectUI(); // 初始化下拉選單
+            updateProfileSelectUI(); 
             
             try {
                 await initDB();
@@ -818,7 +1146,6 @@ body.hide-text-mode .word-tag i {
                 updateSaveStatus('saved');
             } catch (e) {
                 console.warn("DB Init failed", e);
-                // Fallback
                 words = initialWords.map(w => ({ text: w, views: 0, hits: 0, audioBlob: null, roundId: 0 }));
                 updateSaveStatus('error');
             }
@@ -831,7 +1158,6 @@ body.hide-text-mode .word-tag i {
                 loadVoices();
             }
 
-            // Event Listeners
             document.getElementById('autoPlayNext').addEventListener('change', async (e) => {
                 stopEverything();
                 if (!e.target.checked) return;
@@ -1112,7 +1438,6 @@ body.hide-text-mode .word-tag i {
                 let pressTimer;
                 const startPress = () => { 
                     pressTimer = setTimeout(() => {
-                        // 長按觸發：傳入 index 以便自動選取
                         if (type === 'word') enterWordSelectMode(index);
                         if (type === 'review') enterReviewMode(index);
                         if (type === 'mastered') enterDeleteMode(index);
@@ -1124,7 +1449,7 @@ body.hide-text-mode .word-tag i {
             }
         }
 
-        // --- 模式管理 (含自動選取邏輯) ---
+        // --- 模式管理 ---
         function enterWordSelectMode(initialIndex) { 
             isWordSelectMode = true; document.body.classList.add('select-mode-active'); 
             document.getElementById('wordSelectControls').style.display = 'flex'; 
@@ -1157,20 +1482,18 @@ body.hide-text-mode .word-tag i {
             if(cb) cb.checked = true;
         }
 
-        // --- 移動邏輯 (全方位) ---
+        // --- 移動邏輯 ---
         function getSelectedIndices(selector) {
             return Array.from(document.querySelectorAll(`${selector} .select-checkbox:checked`))
                 .map(c => parseInt(c.dataset.index)).sort((a,b) => b-a);
         }
 
-        // 1. 詞語表 -> 已學識 (原有)
         function confirmBatchMove() {
             const indices = getSelectedIndices('#wordList'); if (!indices.length) return;
             indices.forEach(idx => { masteredWords.push(words[idx]); words.splice(idx, 1); });
             if (currentIndex >= words.length) currentIndex = 0;
             showToast(`已移動 ${indices.length} 個到已學識`); markDirty(); exitWordSelectMode(); updateCard();
         }
-        // 2. 詞語表 -> 還要練 (新增)
         function confirmBatchMoveFromWordsToReview() {
             const indices = getSelectedIndices('#wordList'); if (!indices.length) return;
             indices.forEach(idx => { reviewWords.push(words[idx]); words.splice(idx, 1); });
@@ -1178,32 +1501,27 @@ body.hide-text-mode .word-tag i {
             showToast(`已移動 ${indices.length} 個到還要練`); markDirty(); exitWordSelectMode(); updateCard();
         }
 
-        // 3. 還要練 -> 詞語表 (原有)
         function confirmBatchMoveFromReviewToWords() {
             const indices = getSelectedIndices('#reviewList'); if (!indices.length) return;
             indices.forEach(idx => { let w = reviewWords[idx]; w.views=0; w.hits=0; w.roundId=0; words.push(w); reviewWords.splice(idx, 1); });
             showToast(`已退回 ${indices.length} 個到詞語表`); markDirty(); exitReviewMode(); updateCard();
         }
-        // 4. 還要練 -> 已學識 (原有)
         function confirmBatchMoveFromReviewToMastered() {
             const indices = getSelectedIndices('#reviewList'); if (!indices.length) return;
             indices.forEach(idx => { masteredWords.push(reviewWords[idx]); reviewWords.splice(idx, 1); });
             showToast(`已晉級 ${indices.length} 個到已學識`); markDirty(); exitReviewMode();
         }
 
-        // 5. 已學識 -> 刪除 (原有)
         function confirmBatchDelete() {
             const indices = getSelectedIndices('#masteredList'); if (!indices.length) return;
             indices.forEach(idx => masteredWords.splice(idx, 1));
             showToast(`已刪除 ${indices.length} 個詞語`); markDirty(); exitDeleteMode();
         }
-        // 6. 已學識 -> 詞語表 (原有)
         function confirmBatchRestore() {
             const indices = getSelectedIndices('#masteredList'); if (!indices.length) return;
             indices.forEach(idx => { let w = masteredWords[idx]; w.views=0; w.hits=0; w.roundId=0; words.push(w); masteredWords.splice(idx, 1); });
             showToast(`已還原 ${indices.length} 個到詞語表`); markDirty(); exitDeleteMode(); updateCard();
         }
-        // 7. 已學識 -> 還要練 (新增)
         function confirmBatchMoveFromMasteredToReview() {
             const indices = getSelectedIndices('#masteredList'); if (!indices.length) return;
             indices.forEach(idx => { let w = masteredWords[idx]; w.views=0; w.hits=0; reviewWords.push(w); masteredWords.splice(idx, 1); });
@@ -1296,11 +1614,6 @@ body.hide-text-mode .word-tag i {
             if (actionType === 'resetStats') { msgEl.textContent = "確定要將所有詞語的聽讀次數和熟練度歸零嗎？"; btnEl.className = "modal-btn btn-save"; btnEl.style.background = "#5c6bc0"; }
             else if (actionType === 'resetSettings') { msgEl.textContent = "確定要還原設定到初始值嗎？"; btnEl.className = "modal-btn btn-save"; btnEl.style.background = "#78909c"; }
             else if (actionType === 'clearAudio') { msgEl.textContent = "確定要清除所有自製錄音嗎？文字會保留。"; btnEl.className = "modal-btn btn-save"; btnEl.style.background = "#ff9800"; }
-            else if (actionType === 'deleteProfile') { 
-                if(currentProfileId === 'default') { showToast("預設學生不能刪除"); closeModal('confirmModal'); return; }
-                msgEl.textContent = `⚠️ 確定要刪除當前學生「${profiles.find(p=>p.id===currentProfileId)?.name}」的所有資料嗎？此操作無法復原。`; 
-                btnEl.className = "modal-btn btn-danger"; btnEl.style.background = "#ef5350"; 
-            }
         }
 
         document.getElementById('confirmBtn').onclick = async () => {
@@ -1314,17 +1627,6 @@ body.hide-text-mode .word-tag i {
             } else if (pendingAction === 'clearAudio') {
                 let count = 0; [words, reviewWords, masteredWords].forEach(list => list.forEach(w => { if(w.audioBlob) { w.audioBlob = null; count++; } }));
                 markDirty(); renderLists(); updateCard(); showToast(`已清除 ${count} 個錄音`);
-            } else if (pendingAction === 'deleteProfile') {
-                // 刪除學生
-                const idx = profiles.findIndex(p => p.id === currentProfileId);
-                if(idx > -1) {
-                    profiles.splice(idx, 1);
-                    localStorage.setItem('flashcard_profiles', JSON.stringify(profiles));
-                    // 清除 DB 資料 (簡單做法：切換去 default，舊的資料留在 DB 孤兒化，或下次啟動時清理。這裡簡化處理)
-                    await switchProfile('default');
-                    showToast("學生已刪除");
-                    closeModal('settingsModal');
-                }
             }
             closeModal('confirmModal'); pendingAction = null;
         };
