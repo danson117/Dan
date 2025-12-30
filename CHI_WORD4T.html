@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>中英閃卡 v4.5 (聽力測驗模式)</title>
+<title>中英閃卡 v4.6 (智能聽力特訓)</title>
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;900&family=Noto+Serif+HK:wght@500;700;900&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -20,9 +20,7 @@
     --btn-master: #66bb6a;
     --danger: #ef5350;
     --import-btn: #fdd835;
-    --reset-btn: #78909c;
     --review-color: #ff9800;
-    --game-bg: #e8eaf6;
 
     --card-border: #b2ebf2;
     --font-ui: 'M PLUS Rounded 1c', sans-serif;
@@ -263,10 +261,9 @@ body.hide-text-mode .word-tag i {
     box-shadow: 0 5px 0 #b0bec5; font-size: 1rem; padding: 10px;
 }
 
-/* UI 修改: 分行顯示開關 */
 .toggles-area {
     margin-top: 15px;
-    display: flex; flex-direction: column; gap: 10px; /* 垂直排列 */
+    display: flex; flex-direction: column; gap: 10px;
     background: rgba(255,255,255,0.6);
     padding: 12px 20px; border-radius: 16px; flex-shrink: 0;
     align-items: center;
@@ -329,7 +326,7 @@ body.hide-text-mode .word-tag i {
 .btn-no { background: #eceff1; color: #455a64; }
 .btn-danger { background: var(--danger); color: white; }
 
-/* Profile Manager Styles (Tree Structure) */
+/* Profile Manager */
 .profile-list-container {
     max-height: 50vh; overflow-y: auto; margin: 10px 0;
     border: 1px solid #eee; border-radius: 12px; padding: 5px;
@@ -341,16 +338,13 @@ body.hide-text-mode .word-tag i {
 }
 .profile-row.is-folder { background: #e3f2fd; border-color: #bbdefb; }
 .profile-row.active-profile { border-color: var(--accent); background: #fff3e0; }
-
 .tree-indent { width: 20px; flex-shrink: 0; display: inline-block; }
-
 .profile-name-input {
     flex: 1; border: 1px solid transparent; background: transparent;
     font-size: 1rem; font-weight: bold; color: #333; padding: 4px;
     border-radius: 4px; font-family: var(--font-ui);
 }
 .profile-name-input:focus { background: #fff; border-color: var(--accent); outline: none; }
-
 .profile-action-btn {
     width: 30px; height: 30px; border-radius: 6px; border: none;
     display: flex; align-items: center; justify-content: center;
@@ -360,7 +354,6 @@ body.hide-text-mode .word-tag i {
 .btn-del { background: #ffebee; color: #c62828; }
 .btn-folder { background: #e1f5fe; color: #0288d1; }
 
-/* New Settings Grid */
 .settings-grid {
     display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;
 }
@@ -369,7 +362,6 @@ body.hide-text-mode .word-tag i {
     font-weight: bold; font-size: 0.9rem; cursor: pointer; color: white;
     display: flex; flex-direction: column; align-items: center; gap: 5px;
 }
-
 .setting-row {
     display: flex; justify-content: space-between; align-items: center;
     margin-bottom: 15px; text-align: left; border-bottom: 1px solid #eee; padding-bottom: 10px;
@@ -378,7 +370,6 @@ body.hide-text-mode .word-tag i {
 .setting-label { flex: 1; padding-right: 10px; font-size: 0.95rem; font-weight: bold; color: #546e7a; min-width: 150px; }
 .setting-input { width: 80px; padding: 8px; border-radius: 10px; border: 1px solid #cfd8dc; text-align: center; font-size: 1.1rem; }
 .setting-input:focus { border-color: var(--accent); outline: none; background: #fff3e0; }
-.setting-checkbox { width: 24px; height: 24px; accent-color: var(--accent); }
 
 .toast {
     position: fixed;
@@ -405,39 +396,49 @@ body.hide-text-mode .word-tag i {
 
 #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2500; }
 
-/* --- 遊戲模式 CSS --- */
+/* --- 遊戲模式 CSS (v4.6 優化) --- */
 .game-overlay {
     position: fixed; inset: 0; background: var(--bg-primary); z-index: 4000;
     display: none; flex-direction: column; padding: 15px; padding-top: max(15px, env(safe-area-inset-top));
 }
 .game-header {
     display: flex; justify-content: space-between; align-items: center;
-    padding: 10px; background: #fff; border-radius: 16px; margin-bottom: 15px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    padding: 10px 15px; background: #fff; border-radius: 16px; margin-bottom: 15px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05); flex-shrink: 0;
 }
 .game-title { font-size: 1.2rem; font-weight: 900; color: #3f51b5; display: flex; align-items: center; gap: 8px; }
-.game-score { font-size: 1rem; color: #7986cb; font-weight: bold; }
-.game-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+.game-score-box {
+    background: #e8eaf6; padding: 5px 12px; border-radius: 12px;
+    color: #3949ab; font-weight: bold; font-size: 0.95rem; border: 1px solid #c5cae9;
+}
+.game-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; width: 100%; height: 100%; overflow: hidden; }
+
+/* 九宮格佈局 */
 .game-grid {
-    display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;
-    width: 100%; max-width: 600px; height: 100%; max-height: 80vh;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3列 */
+    grid-template-rows: repeat(3, 1fr);    /* 3行 */
+    gap: 12px;
+    width: 100%; max-width: 900px; /* 更寬的限制 */
+    height: 100%; max-height: 85vh;
     align-content: center;
 }
 .game-card {
-    background: #fff; border-radius: 20px; border: 3px solid #e8eaf6;
+    background: #fff; border-radius: 16px; border: 3px solid #e8eaf6;
     display: flex; align-items: center; justify-content: center;
     font-family: var(--font-learn-zh); font-weight: bold; color: #333;
-    font-size: 2rem; cursor: pointer; box-shadow: 0 4px 0 #c5cae9;
+    font-size: 2.5rem; /* 字體加大 */
+    cursor: pointer; box-shadow: 0 4px 0 #c5cae9;
     transition: transform 0.1s, background 0.2s; position: relative;
-    aspect-ratio: 2 / 1;
+    width: 100%; height: 100%;
 }
 .game-card:active { transform: scale(0.95); box-shadow: 0 2px 0 #c5cae9; top: 2px; }
 .game-card.shake { animation: shake 0.5s; border-color: #ef5350; background: #ffebee; }
 .game-card.correct { border-color: #66bb6a; background: #e8f5e9; transform: scale(1.05); z-index: 10; }
-.game-card.is-english { font-family: var(--font-learn-en); font-size: 1.5rem; }
+.game-card.is-english { font-family: var(--font-learn-en); font-size: 2rem; }
 
 .game-controls {
-    margin-top: 20px; display: flex; gap: 20px; justify-content: center; width: 100%;
+    position: absolute; bottom: 20px; right: 20px; z-index: 50;
 }
 .btn-replay {
     width: 60px; height: 60px; border-radius: 50%; border: none;
@@ -461,8 +462,10 @@ body.hide-text-mode .word-tag i {
     .word-display { font-size: 6rem; }
     .controls-grid { margin-bottom: 20px; }
     .card-info-bl, .card-info-br { font-size: 1.5rem; bottom: 10px; }
-    .game-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-    .game-card { font-size: 1.8rem; }
+    
+    /* 直屏時稍微調整九宮格 */
+    .game-grid { gap: 8px; max-height: 70vh; }
+    .game-card { font-size: 2rem; border-radius: 12px; }
 }
 
 @media (max-width: 600px) {
@@ -476,7 +479,7 @@ body.hide-text-mode .word-tag i {
 <body>
 
     <canvas id="confetti-canvas"></canvas>
-    <div class="version-tag">v4.5</div>
+    <div class="version-tag">v4.6</div>
 
     <div class="main-layout">
         <div class="sidebar">
@@ -543,7 +546,7 @@ body.hide-text-mode .word-tag i {
             </div>
 
             <div class="parents-bar">
-                <button class="mini-btn game-btn" onclick="openGameMode()">🎮 聽力測驗</button>
+                <button class="mini-btn game-btn" onclick="openGameMode()">🎮 聽力特訓</button>
                 <button class="mini-btn" onclick="openEditModal()">📝 編輯/導入</button>
                 <button class="mini-btn" onclick="exportData()">📤 導出</button>
                 <button class="mini-btn" onclick="openSettingsModal()">⚙️ 設定</button>
@@ -591,7 +594,8 @@ body.hide-text-mode .word-tag i {
     <!-- 遊戲模式 Overlay -->
     <div id="gameOverlay" class="game-overlay">
         <div class="game-header">
-            <div class="game-title">🎮 聽力測驗 <small style="font-size:0.8rem; color:#7986cb; margin-left:5px;">(還要練優先)</small></div>
+            <div class="game-title">🎮 聽力特訓 <small style="font-size:0.8rem; color:#7986cb; margin-left:5px;">(純練習模式)</small></div>
+            <div class="game-score-box" id="gameProgressText">還要練剩餘: 0</div>
             <button class="mini-btn" onclick="closeGameMode()">❌ 離開</button>
         </div>
         <div class="game-body">
@@ -711,8 +715,15 @@ body.hide-text-mode .word-tag i {
         let words = [];
         let reviewWords = [];
         let masteredWords = [];
-        const FALLBACK_WORDS = ["學校", "朋友", "快樂", "老師", "爸爸", "媽媽", "公園", "讀書", "寫字", "遊戲", "太陽", "月亮", "星星", "天空", "花朵", "小狗", "小貓", "吃飯", "喝水", "睡覺"];
         
+        // --- 強力隱藏詞庫 (分字數) ---
+        const FALLBACK_DB = {
+            1: ["人", "口", "大", "小", "日", "月", "山", "水", "火", "木", "天", "地", "手", "足", "耳", "目", "上", "下", "左", "右", "多", "少", "男", "女", "爸", "媽", "哥", "姐", "弟", "妹"],
+            2: ["學校", "老師", "同學", "朋友", "讀書", "寫字", "畫畫", "唱歌", "跳舞", "遊戲", "公園", "快樂", "高興", "生氣", "傷心", "太陽", "月亮", "星星", "天空", "白雲", "下雨", "打風", "春天", "夏天", "秋天", "冬天", "蘋果", "橙", "香蕉", "西瓜", "麵包", "牛奶", "吃飯", "喝水", "睡覺", "起床", "刷牙", "洗臉", "衣服", "鞋子"],
+            3: ["遊樂場", "圖書館", "運動場", "游泳池", "超級市場", "便利店", "消防員", "警察局", "救護車", "巴士站", "地鐵站", "紅綠燈", "斑馬線", "垃圾桶", "洗手間", "幼稚園", "小學生", "書包", "筆記本", "鉛筆盒", "擦膠", "間尺", "顏色筆", "故事書", "圖畫紙", "手工紙", "剪刀", "膠水", "星期一", "星期日"],
+            4: ["春暖花開", "鳥語花香", "風和日麗", "萬里無雲", "傾盆大雨", "電閃雷鳴", "春夏秋冬", "東南西北", "前後左右", "一干二淨", "五顏六色", "七上八下", "十全十美", "百花齊放", "開開心心", "快快樂樂", "平平安安", "健健康康", "聰明伶俐", "活潑可愛", "專心致志", "守望相助", "相親相愛", "尊師重道", "孝順父母", "兄友弟恭", "知錯能改", "誠實守信", "助人為樂", "禮貌待人"]
+        };
+
         let profiles = JSON.parse(localStorage.getItem('flashcard_profiles')) || [{id: 'default', name: '預設學生', parentId: null, isFolder: false}];
         let currentProfileId = localStorage.getItem('flashcard_current_profile') || 'default';
 
@@ -759,6 +770,8 @@ body.hide-text-mode .word-tag i {
         let gameTarget = null;
         let gameItems = [];
         let isGameActive = false;
+        let gameSessionQueue = []; // Queue for the current game session
+        let gameTotalReviewCount = 0; // Snapshot of total review words at start
 
         // --- 輔助函數 ---
         function getDBKey(type) {
@@ -1155,6 +1168,7 @@ body.hide-text-mode .word-tag i {
         }
 
         function isEnglish(text) { return /^[A-Za-z0-9\s\.,\?!'"]+$/.test(text); }
+        function getLength(text) { return isEnglish(text) ? 'en' : text.length; }
 
         function pickNextIndexRandom(allowSameAsCurrent = false) {
             if (words.length === 0) return 0;
@@ -1548,7 +1562,6 @@ body.hide-text-mode .word-tag i {
 
         function handleMasteryClick(e) {
             if (words.length === 0) return;
-            
             stopEverything();
 
             const item = words[currentIndex]; item.hits++;
@@ -1575,59 +1588,86 @@ body.hide-text-mode .word-tag i {
             }
         }
 
-        // --- Game Mode Logic ---
+        // --- Game Mode Logic (v4.6 Updated) ---
         async function openGameMode() {
             stopEverything();
             await unlockAudioAndSpeech();
             const totalCards = words.length + reviewWords.length + masteredWords.length;
             if (totalCards === 0) { showToast("請先加入一些生字！"); return; }
+            
+            // 初始化遊戲 Session
             isGameActive = true;
+            
+            // 優先使用「還要練」列表
+            if (reviewWords.length > 0) {
+                gameSessionQueue = [...reviewWords];
+                gameTotalReviewCount = reviewWords.length;
+            } else {
+                gameSessionQueue = [...words];
+                gameTotalReviewCount = words.length;
+            }
+            
+            updateGameScoreUI();
             document.getElementById('gameOverlay').style.display = 'flex';
             generateGameRound();
+        }
+
+        function updateGameScoreUI() {
+            const el = document.getElementById('gameProgressText');
+            if (reviewWords.length > 0) {
+                el.textContent = `還要練剩餘: ${gameSessionQueue.length} / ${gameTotalReviewCount}`;
+            } else {
+                el.textContent = `詞語表剩餘: ${gameSessionQueue.length} / ${gameTotalReviewCount}`;
+            }
         }
 
         function closeGameMode() {
             isGameActive = false;
             document.getElementById('gameOverlay').style.display = 'none';
             stopEverything();
-            renderLists(); // Refresh main lists in case of mastery
         }
 
         function generateGameRound() {
             const grid = document.getElementById('gameGrid');
             grid.innerHTML = '';
             
-            // 1. Pick Target (Prioritize Review > Words)
-            let targetPool = reviewWords.length > 0 ? reviewWords : words;
-            if (targetPool.length === 0) targetPool = masteredWords; // Fallback to mastered if others empty
+            // 1. Pick Target from Session Queue
+            if (gameSessionQueue.length === 0) {
+                // 如果隊列空了，重新填充 (無限練習模式)
+                if (reviewWords.length > 0) gameSessionQueue = [...reviewWords];
+                else gameSessionQueue = [...words];
+                if (gameSessionQueue.length === 0) gameSessionQueue = [...masteredWords]; // Fallback
+                showToast("一輪完成！再來一次！");
+            }
             
-            if (targetPool.length === 0) { closeGameMode(); return; } // Should not happen due to check in openGameMode
+            const targetIndex = Math.floor(Math.random() * gameSessionQueue.length);
+            gameTarget = gameSessionQueue[targetIndex];
+            const targetLen = getLength(gameTarget.text);
 
-            const targetIndex = Math.floor(Math.random() * targetPool.length);
-            gameTarget = targetPool[targetIndex];
-
-            // 2. Pick Distractors (9 items)
-            let distractors = [];
+            // 2. Pick Distractors (8 items) - Smart Selection
+            // 優先找同字數的
             let allAvailable = [...reviewWords, ...words, ...masteredWords].filter(w => w !== gameTarget);
+            let sameLenDistractors = allAvailable.filter(w => getLength(w.text) === targetLen);
             
-            // Shuffle available real words
-            for (let i = allAvailable.length - 1; i > 0; i--) {
+            // Shuffle sameLenDistractors
+            for (let i = sameLenDistractors.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
-                [allAvailable[i], allAvailable[j]] = [allAvailable[j], allAvailable[i]];
+                [sameLenDistractors[i], sameLenDistractors[j]] = [sameLenDistractors[j], sameLenDistractors[i]];
             }
 
-            // Fill with real words first
-            distractors = allAvailable.slice(0, 9);
+            let distractors = sameLenDistractors.slice(0, 8);
 
-            // If not enough, fill with FALLBACK_WORDS
-            if (distractors.length < 9) {
-                let needed = 9 - distractors.length;
-                let fallbackPool = [...FALLBACK_WORDS].filter(w => w !== gameTarget.text && !distractors.some(d => d.text === w));
+            // 如果不夠8個，從隱藏詞庫補
+            if (distractors.length < 8 && !isEnglish(gameTarget.text)) {
+                let needed = 8 - distractors.length;
+                let fallbackPool = (FALLBACK_DB[targetLen] || []).filter(w => w !== gameTarget.text);
+                
                 // Shuffle fallback
                 for (let i = fallbackPool.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
                     [fallbackPool[i], fallbackPool[j]] = [fallbackPool[j], fallbackPool[i]];
                 }
+                
                 for(let i=0; i<needed; i++) {
                     if (i < fallbackPool.length) {
                         distractors.push({ text: fallbackPool[i], isFallback: true });
@@ -1635,7 +1675,16 @@ body.hide-text-mode .word-tag i {
                 }
             }
 
-            // 3. Combine and Shuffle
+            // 如果還是不夠 (例如英文或超長字)，隨機補
+            if (distractors.length < 8) {
+                let needed = 8 - distractors.length;
+                let randomPool = allAvailable.filter(w => !distractors.includes(w));
+                for(let i=0; i<needed; i++) {
+                    if (i < randomPool.length) distractors.push(randomPool[i]);
+                }
+            }
+
+            // 3. Combine and Shuffle (Total 9)
             gameItems = [gameTarget, ...distractors];
             for (let i = gameItems.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -1662,36 +1711,20 @@ body.hide-text-mode .word-tag i {
         }
 
         function handleGameCardClick(cardElement, item) {
-            if (cardElement.classList.contains('correct')) return; // Already clicked correctly
+            if (cardElement.classList.contains('correct')) return; 
 
             if (item === gameTarget) {
                 // Correct!
                 cardElement.classList.add('correct');
                 triggerConfetti(null, null, 0.6);
                 
-                // Logic: Increment hits
-                if (!item.isFallback) {
-                    item.hits++;
-                    // Check Mastery
-                    if (item.hits >= settings.masteryThreshold) {
-                        // Move to Mastered
-                        if (reviewWords.includes(item)) {
-                            reviewWords.splice(reviewWords.indexOf(item), 1);
-                            masteredWords.push(item);
-                            showToast(`🎉 恭喜！「${item.text}」已學識！`);
-                        } else if (words.includes(item)) {
-                            words.splice(words.indexOf(item), 1);
-                            masteredWords.push(item);
-                            showToast(`🎉 恭喜！「${item.text}」已學識！`);
-                        }
-                        markDirty();
-                    } else {
-                        showToast("答啱咗！繼續加油！");
-                        markDirty();
-                    }
-                } else {
-                    showToast("答啱咗！");
-                }
+                // 從本次 Session 隊列中移除 (讓計數器減少)
+                const idx = gameSessionQueue.indexOf(gameTarget);
+                if (idx > -1) gameSessionQueue.splice(idx, 1);
+                updateGameScoreUI();
+
+                // 這裡不移動原本列表的分類 (純練習)
+                showToast("答啱咗！");
 
                 // Next round after delay
                 setTimeout(() => {
@@ -1702,7 +1735,6 @@ body.hide-text-mode .word-tag i {
                 // Wrong!
                 cardElement.classList.add('shake');
                 setTimeout(() => cardElement.classList.remove('shake'), 500);
-                // Play the wrong card's audio for learning
                 playItemAudio(item);
             }
         }
