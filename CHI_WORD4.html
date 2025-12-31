@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>中英閃卡 v4.2 (樹狀目錄+UI優化版)</title>
+<title>中英閃卡 v4.6 (智能聽力特訓)</title>
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;900&family=Noto+Serif+HK:wght@500;700;900&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -20,7 +20,6 @@
     --btn-master: #66bb6a;
     --danger: #ef5350;
     --import-btn: #fdd835;
-    --reset-btn: #78909c;
     --review-color: #ff9800;
 
     --card-border: #b2ebf2;
@@ -227,12 +226,10 @@ body.hide-text-mode .word-tag i {
     text-shadow: 1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff;
 }
 
-/* --- UI 修改: 間距與按鈕位置 --- */
 .controls-grid {
-    /* 1. 交換了左右按鈕的順序 (HTML中修改) */
-    display: grid; grid-template-columns: 1fr 0.4fr 1fr; gap: 20px; /* 3. 增加間距 */
+    display: grid; grid-template-columns: 1fr 0.4fr 1fr; gap: 20px;
     width: 100%; max-width: 600px; z-index: 20; flex-shrink: 0;
-    margin-bottom: 25px; /* 3. 增加底部間距 */
+    margin-bottom: 25px;
 }
 
 .big-btn {
@@ -253,32 +250,40 @@ body.hide-text-mode .word-tag i {
 
 .btn-master { background: var(--btn-master); box-shadow: 0 5px 0 #43a047; }
 
-/* 2. 導航按鈕縮短並置中 */
 .nav-row {
     display: flex; gap: 25px; width: 100%; max-width: 600px; 
-    margin-top: 20px; margin-bottom: 10px; /* 3. 增加間距 */
+    margin-top: 20px; margin-bottom: 10px;
     justify-content: center;
 }
 .nav-btn {
-    flex: none; width: 130px; /* 固定寬度 */
+    flex: none; width: 130px;
     background: #fff; color: var(--text-primary); border: 2px solid #cfd8dc;
     box-shadow: 0 5px 0 #b0bec5; font-size: 1rem; padding: 10px;
 }
 
 .toggles-area {
-    margin-top: 15px; /* 3. 增加間距 */
-    display: flex; gap: 15px; background: rgba(255,255,255,0.6);
-    padding: 12px 20px; border-radius: 16px; flex-wrap: wrap; justify-content: center; flex-shrink: 0;
+    margin-top: 15px;
+    display: flex; flex-direction: column; gap: 10px;
+    background: rgba(255,255,255,0.6);
+    padding: 12px 20px; border-radius: 16px; flex-shrink: 0;
+    align-items: center;
+}
+.toggle-row {
+    display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;
 }
 .toggle-item { display: flex; align-items: center; gap: 6px; font-weight: bold; font-size: 0.9rem; cursor: pointer; }
 .toggle-item input { accent-color: var(--accent); width: 20px; height: 20px; }
 
 .parents-bar {
     margin-top: auto; display: flex; gap: 10px; justify-content: center; padding-top: 10px; flex-shrink: 0;
+    flex-wrap: wrap;
 }
 .mini-btn {
     padding: 10px 14px; font-size: 0.85rem; border-radius: 10px; border: 1px solid #cfd8dc;
     background: #fff; cursor: pointer; font-weight: bold; color: #546e7a;
+}
+.game-btn {
+    background: #e8eaf6; color: #3f51b5; border-color: #c5cae9;
 }
 
 .save-status {
@@ -321,7 +326,7 @@ body.hide-text-mode .word-tag i {
 .btn-no { background: #eceff1; color: #455a64; }
 .btn-danger { background: var(--danger); color: white; }
 
-/* Profile Manager Styles (Tree Structure) */
+/* Profile Manager */
 .profile-list-container {
     max-height: 50vh; overflow-y: auto; margin: 10px 0;
     border: 1px solid #eee; border-radius: 12px; padding: 5px;
@@ -333,16 +338,13 @@ body.hide-text-mode .word-tag i {
 }
 .profile-row.is-folder { background: #e3f2fd; border-color: #bbdefb; }
 .profile-row.active-profile { border-color: var(--accent); background: #fff3e0; }
-
 .tree-indent { width: 20px; flex-shrink: 0; display: inline-block; }
-
 .profile-name-input {
     flex: 1; border: 1px solid transparent; background: transparent;
     font-size: 1rem; font-weight: bold; color: #333; padding: 4px;
     border-radius: 4px; font-family: var(--font-ui);
 }
 .profile-name-input:focus { background: #fff; border-color: var(--accent); outline: none; }
-
 .profile-action-btn {
     width: 30px; height: 30px; border-radius: 6px; border: none;
     display: flex; align-items: center; justify-content: center;
@@ -352,7 +354,6 @@ body.hide-text-mode .word-tag i {
 .btn-del { background: #ffebee; color: #c62828; }
 .btn-folder { background: #e1f5fe; color: #0288d1; }
 
-/* New Settings Grid */
 .settings-grid {
     display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;
 }
@@ -361,7 +362,6 @@ body.hide-text-mode .word-tag i {
     font-weight: bold; font-size: 0.9rem; cursor: pointer; color: white;
     display: flex; flex-direction: column; align-items: center; gap: 5px;
 }
-
 .setting-row {
     display: flex; justify-content: space-between; align-items: center;
     margin-bottom: 15px; text-align: left; border-bottom: 1px solid #eee; padding-bottom: 10px;
@@ -396,6 +396,63 @@ body.hide-text-mode .word-tag i {
 
 #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2500; }
 
+/* --- 遊戲模式 CSS (v4.6 優化) --- */
+.game-overlay {
+    position: fixed; inset: 0; background: var(--bg-primary); z-index: 4000;
+    display: none; flex-direction: column; padding: 15px; padding-top: max(15px, env(safe-area-inset-top));
+}
+.game-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 15px; background: #fff; border-radius: 16px; margin-bottom: 15px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05); flex-shrink: 0;
+}
+.game-title { font-size: 1.2rem; font-weight: 900; color: #3f51b5; display: flex; align-items: center; gap: 8px; }
+.game-score-box {
+    background: #e8eaf6; padding: 5px 12px; border-radius: 12px;
+    color: #3949ab; font-weight: bold; font-size: 0.95rem; border: 1px solid #c5cae9;
+}
+.game-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; width: 100%; height: 100%; overflow: hidden; }
+
+/* 九宮格佈局 */
+.game-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3列 */
+    grid-template-rows: repeat(3, 1fr);    /* 3行 */
+    gap: 12px;
+    width: 100%; max-width: 900px; /* 更寬的限制 */
+    height: 100%; max-height: 85vh;
+    align-content: center;
+}
+.game-card {
+    background: #fff; border-radius: 16px; border: 3px solid #e8eaf6;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-learn-zh); font-weight: bold; color: #333;
+    font-size: 2.5rem; /* 字體加大 */
+    cursor: pointer; box-shadow: 0 4px 0 #c5cae9;
+    transition: transform 0.1s, background 0.2s; position: relative;
+    width: 100%; height: 100%;
+}
+.game-card:active { transform: scale(0.95); box-shadow: 0 2px 0 #c5cae9; top: 2px; }
+.game-card.shake { animation: shake 0.5s; border-color: #ef5350; background: #ffebee; }
+.game-card.correct { border-color: #66bb6a; background: #e8f5e9; transform: scale(1.05); z-index: 10; }
+.game-card.is-english { font-family: var(--font-learn-en); font-size: 2rem; }
+
+.game-controls {
+    position: absolute; bottom: 20px; right: 20px; z-index: 50;
+}
+.btn-replay {
+    width: 60px; height: 60px; border-radius: 50%; border: none;
+    background: #3f51b5; color: white; font-size: 1.5rem;
+    box-shadow: 0 4px 10px rgba(63, 81, 181, 0.3); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+}
+.btn-replay:active { transform: scale(0.9); }
+
+@keyframes shake {
+    0% { transform: translateX(0); } 25% { transform: translateX(-5px); }
+    50% { transform: translateX(5px); } 75% { transform: translateX(-5px); } 100% { transform: translateX(0); }
+}
+
 @media (orientation: portrait) {
     .main-layout { flex-direction: column; gap: 10px; }
     .sidebar { flex: none; height: 50%; width: 100%; }
@@ -405,6 +462,10 @@ body.hide-text-mode .word-tag i {
     .word-display { font-size: 6rem; }
     .controls-grid { margin-bottom: 20px; }
     .card-info-bl, .card-info-br { font-size: 1.5rem; bottom: 10px; }
+    
+    /* 直屏時稍微調整九宮格 */
+    .game-grid { gap: 8px; max-height: 70vh; }
+    .game-card { font-size: 2rem; border-radius: 12px; }
 }
 
 @media (max-width: 600px) {
@@ -418,30 +479,27 @@ body.hide-text-mode .word-tag i {
 <body>
 
     <canvas id="confetti-canvas"></canvas>
-    <div class="version-tag">v4.2</div>
+    <div class="version-tag">v4.6</div>
 
     <div class="main-layout">
         <div class="sidebar">
-            <!-- 學生檔案切換 -->
             <div class="profile-bar">
                 <span style="font-size:1.2rem">👤</span>
                 <select id="profileSelect" class="profile-select" onchange="switchProfile(this.value)">
                     <option value="default">預設學生</option>
                 </select>
-                <!-- 管理按鈕 -->
                 <button class="profile-btn" onclick="openProfileManager()">⚙️</button>
             </div>
 
-            <!-- 詞語表 -->
             <div class="panel panel-words">
                 <div class="panel-header">
                     <div class="panel-title">
                         <span>📖 詞語表 <small id="wordCount">(0)</small></span>
                         <div id="wordSelectControls" class="mode-controls">
-                            <!-- 4. 全選按鈕 -->
                             <button class="mode-btn" style="background:#78909c" onclick="toggleSelectAll('#wordList')">全選</button>
                             <button class="mode-btn" style="background:var(--review-color)" onclick="confirmBatchMoveFromWordsToReview()">移至還要練</button>
                             <button class="mode-btn" style="background:var(--btn-master)" onclick="confirmBatchMove()">移至已學識</button>
+                            <button class="mode-btn" style="background:var(--danger)" onclick="confirmBatchDeleteFromWords()">刪除</button>
                             <button class="mode-btn" style="background:#cfd8dc; color:#555" onclick="exitWordSelectMode()">取消</button>
                         </div>
                     </div>
@@ -451,13 +509,11 @@ body.hide-text-mode .word-tag i {
                 </div>
             </div>
 
-            <!-- 還要練 -->
             <div class="panel panel-review">
                 <div class="panel-header">
                     <div class="panel-title">
                         <span>💪 還要練 <small id="reviewCount">(0)</small></span>
                         <div id="reviewControls" class="mode-controls">
-                            <!-- 4. 全選按鈕 -->
                             <button class="mode-btn" style="background:#78909c" onclick="toggleSelectAll('#reviewList')">全選</button>
                             <button class="mode-btn" style="background:var(--btn-speak)" onclick="confirmBatchMoveFromReviewToWords()">退回詞語表</button>
                             <button class="mode-btn" style="background:var(--btn-master)" onclick="confirmBatchMoveFromReviewToMastered()">晉級已學識</button>
@@ -470,13 +526,11 @@ body.hide-text-mode .word-tag i {
                 </div>
             </div>
 
-            <!-- 已學識 -->
             <div class="panel panel-mastered">
                 <div class="panel-header">
                     <div class="panel-title">
                         <span>🏆 已學識 <small id="masteredCount">(0)</small></span>
                         <div id="deleteControls" class="mode-controls">
-                            <!-- 4. 全選按鈕 -->
                             <button class="mode-btn" style="background:#78909c" onclick="toggleSelectAll('#masteredList')">全選</button>
                             <button class="mode-btn" style="background:var(--btn-speak)" onclick="confirmBatchRestore()">還原詞語表</button>
                             <button class="mode-btn" style="background:var(--review-color)" onclick="confirmBatchMoveFromMasteredToReview()">移至還要練</button>
@@ -492,6 +546,7 @@ body.hide-text-mode .word-tag i {
             </div>
 
             <div class="parents-bar">
+                <button class="mini-btn game-btn" onclick="openGameMode()">🎮 聽力特訓</button>
                 <button class="mini-btn" onclick="openEditModal()">📝 編輯/導入</button>
                 <button class="mini-btn" onclick="exportData()">📤 導出</button>
                 <button class="mini-btn" onclick="openSettingsModal()">⚙️ 設定</button>
@@ -512,23 +567,43 @@ body.hide-text-mode .word-tag i {
             </div>
 
             <div class="controls-grid">
-                <!-- 1. 按鈕位置互換: 綠色在左，藍色在右 -->
                 <button class="big-btn btn-master" id="masteredBtn" onclick="handleMasteryClick(event)">✅ 我識讀!</button>
                 <button class="big-btn btn-record" id="recordBtn">🎤</button>
                 <button class="big-btn btn-speak" id="speakBtn" onclick="toggleSpeak()">🔊 朗讀</button>
             </div>
 
             <div class="nav-row">
-                <!-- 2. 按鈕縮短並置中 -->
                 <button class="big-btn nav-btn" id="prevBtn" onclick="manualPrev()">👈 上一個</button>
                 <button class="big-btn nav-btn" id="nextBtn" onclick="manualNext()">下一個 👉</button>
             </div>
 
             <div class="toggles-area">
-                <label class="toggle-item"><input type="checkbox" id="autoPlayNext"> ▶️ 自動模式</label>
-                <label class="toggle-item"><input type="checkbox" id="repeatThreeTimes"> 🔁 讀三次</label>
-                <label class="toggle-item"><input type="checkbox" id="randomOrder"> 🔀 洗牌模式</label>
-                <label class="toggle-item"><input type="checkbox" id="hideTextMode"> 🙈 隱藏文字</label>
+                <div class="toggle-row">
+                    <label class="toggle-item"><input type="checkbox" id="readImmediatelyToggle"> ⚡ 立即朗讀</label>
+                    <label class="toggle-item"><input type="checkbox" id="autoPlayNext"> ▶️ 自動模式</label>
+                    <label class="toggle-item"><input type="checkbox" id="repeatThreeTimes"> 🔁 讀三次</label>
+                </div>
+                <div class="toggle-row">
+                    <label class="toggle-item"><input type="checkbox" id="randomOrder"> 🔀 洗牌模式</label>
+                    <label class="toggle-item"><input type="checkbox" id="hideTextMode"> 🙈 隱藏文字</label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 遊戲模式 Overlay -->
+    <div id="gameOverlay" class="game-overlay">
+        <div class="game-header">
+            <div class="game-title">🎮 聽力特訓 <small style="font-size:0.8rem; color:#7986cb; margin-left:5px;">(純練習模式)</small></div>
+            <div class="game-score-box" id="gameProgressText">還要練剩餘: 0</div>
+            <button class="mini-btn" onclick="closeGameMode()">❌ 離開</button>
+        </div>
+        <div class="game-body">
+            <div class="game-grid" id="gameGrid">
+                <!-- Cards will be generated here -->
+            </div>
+            <div class="game-controls">
+                <button class="btn-replay" onclick="playGameAudio()">🔊</button>
             </div>
         </div>
     </div>
@@ -536,16 +611,12 @@ body.hide-text-mode .word-tag i {
     <div id="saveStatus" class="save-status">☁️ 準備中...</div>
     <div id="toast" class="toast">提示訊息</div>
 
-    <!-- 學生管理視窗 (樹狀目錄版) -->
+    <!-- 學生管理視窗 -->
     <div id="profileManagerModal" class="custom-modal">
         <div class="modal-content">
             <div class="modal-title">👤 學生與目錄管理</div>
             <p style="font-size:0.85rem; color:#888; margin-bottom:10px;">建立資料夾分類，或直接管理學生</p>
-            
-            <div id="profileListContainer" class="profile-list-container">
-                <!-- JS 生成樹狀列表 -->
-            </div>
-
+            <div id="profileListContainer" class="profile-list-container"></div>
             <div class="modal-actions" style="margin-top:5px;">
                 <button class="modal-btn btn-folder" onclick="openAddFolderModal()">📁 新增目錄</button>
                 <button class="modal-btn btn-save" onclick="openAddProfileModal()">➕ 新增學生</button>
@@ -559,15 +630,12 @@ body.hide-text-mode .word-tag i {
         <div class="modal-content">
             <div class="modal-title" id="addModalTitle">➕ 新增學生</div>
             <input type="text" id="newProfileNameInput" class="import-textarea" style="height:50px; text-align:center;" placeholder="輸入名字">
-            
-            <!-- 5. 選擇父目錄 -->
             <div style="margin-top:10px; text-align:left;">
                 <label style="font-size:0.85rem; color:#666; font-weight:bold;">位置 (父目錄):</label>
                 <select id="parentFolderSelect" class="profile-select" style="width:100%; margin-top:5px;">
                     <option value="">(根目錄)</option>
                 </select>
             </div>
-
             <div class="modal-actions">
                 <button class="modal-btn btn-save" onclick="confirmAddProfileOrFolder()">建立</button>
                 <button class="modal-btn btn-no" onclick="closeModal('addProfileModal')">取消</button>
@@ -615,10 +683,13 @@ body.hide-text-mode .word-tag i {
                     <span>📊 重置統計</span><span style="font-size:0.7rem; opacity:0.8; font-weight:normal">聽讀次數歸零</span>
                 </button>
                 <button class="btn-setting-action" style="background:#78909c;" onclick="confirmAction('resetSettings')">
-                    <span>↩️ 還原設定</span><span style="font-size:0.7rem; opacity:0.8; font-weight:normal">初始值</span>
+                    <span>↩️ 還原設定</span><span style="font-size:0.7rem; opacity:0.8; font-weight:normal">初始值 (4, 3, 2, 1)</span>
                 </button>
                 <button class="btn-setting-action" style="background:#ff9800;" onclick="confirmAction('clearAudio')">
-                    <span>🗑️ 清除錄音</span><span style="font-size:0.7rem; opacity:0.8; font-weight:normal">保留文字</span>
+                    <span>🗑️ 清除錄音</span><span style="font-size:0.7rem; opacity:0.8; font-weight:normal">保留文字，刪聲音</span>
+                </button>
+                <button class="btn-setting-action" style="background:var(--danger);" onclick="confirmAction('clearAll')">
+                    <span>💥 清空所有</span><span style="font-size:0.7rem; opacity:0.8; font-weight:normal">刪除全部資料</span>
                 </button>
             </div>
             <div class="modal-actions" style="margin-top: 20px;">
@@ -645,12 +716,17 @@ body.hide-text-mode .word-tag i {
         let reviewWords = [];
         let masteredWords = [];
         
-        // 多學生系統 (支援樹狀結構)
-        // Profile Object: { id, name, parentId: string|null, isFolder: boolean }
+        // --- 強力隱藏詞庫 (分字數) ---
+        const FALLBACK_DB = {
+            1: ["人", "口", "大", "小", "日", "月", "山", "水", "火", "木", "天", "地", "手", "足", "耳", "目", "上", "下", "左", "右", "多", "少", "男", "女", "爸", "媽", "哥", "姐", "弟", "妹"],
+            2: ["學校", "老師", "同學", "朋友", "讀書", "寫字", "畫畫", "唱歌", "跳舞", "遊戲", "公園", "快樂", "高興", "生氣", "傷心", "太陽", "月亮", "星星", "天空", "白雲", "下雨", "打風", "春天", "夏天", "秋天", "冬天", "蘋果", "橙", "香蕉", "西瓜", "麵包", "牛奶", "吃飯", "喝水", "睡覺", "起床", "刷牙", "洗臉", "衣服", "鞋子"],
+            3: ["遊樂場", "圖書館", "運動場", "游泳池", "超級市場", "便利店", "消防員", "警察局", "救護車", "巴士站", "地鐵站", "紅綠燈", "斑馬線", "垃圾桶", "洗手間", "幼稚園", "小學生", "書包", "筆記本", "鉛筆盒", "擦膠", "間尺", "顏色筆", "故事書", "圖畫紙", "手工紙", "剪刀", "膠水", "星期一", "星期日"],
+            4: ["春暖花開", "鳥語花香", "風和日麗", "萬里無雲", "傾盆大雨", "電閃雷鳴", "春夏秋冬", "東南西北", "前後左右", "一干二淨", "五顏六色", "七上八下", "十全十美", "百花齊放", "開開心心", "快快樂樂", "平平安安", "健健康康", "聰明伶俐", "活潑可愛", "專心致志", "守望相助", "相親相愛", "尊師重道", "孝順父母", "兄友弟恭", "知錯能改", "誠實守信", "助人為樂", "禮貌待人"]
+        };
+
         let profiles = JSON.parse(localStorage.getItem('flashcard_profiles')) || [{id: 'default', name: '預設學生', parentId: null, isFolder: false}];
         let currentProfileId = localStorage.getItem('flashcard_current_profile') || 'default';
 
-        // 確保舊資料有 parentId
         profiles.forEach(p => {
             if(p.parentId === undefined) p.parentId = null;
             if(p.isFolder === undefined) p.isFolder = false;
@@ -679,7 +755,7 @@ body.hide-text-mode .word-tag i {
         let isWordSelectMode = false;
         let isReviewMode = false;
 
-        let settings = { autoDelay: 4, repeatDelay: 3, masteryThreshold: 2, masteryViewLimit: 1 };
+        let settings = { autoDelay: 4, repeatDelay: 3, masteryThreshold: 2, masteryViewLimit: 1, readImmediately: false };
 
         const DB_NAME = 'FlashcardDB_v4.0';
         const DB_VERSION = 1;
@@ -688,39 +764,20 @@ body.hide-text-mode .word-tag i {
         let saveTimeout = null;
         let mediaUnlocked = false;
 
-        let isAddingFolder = false; // 狀態標記
+        let isAddingFolder = false;
+
+        // --- Game Mode Variables ---
+        let gameTarget = null;
+        let gameItems = [];
+        let isGameActive = false;
+        let gameSessionQueue = []; // Queue for the current game session
+        let gameTotalReviewCount = 0; // Snapshot of total review words at start
 
         // --- 輔助函數 ---
         function getDBKey(type) {
             return `${currentProfileId}_${type}`;
         }
 
-        // 遞歸構建樹狀選項
-        function buildProfileOptions(parentId, depth) {
-            const children = profiles.filter(p => p.parentId === parentId);
-            let options = [];
-            children.forEach(p => {
-                if(p.isFolder) {
-                    // 資料夾不可選為當前用戶，但為了顯示結構，可以加 disabled
-                    // 這裡我們只顯示學生在下拉選單，但要顯示路徑嗎？
-                    // 簡單做法：只顯示學生，但名稱帶縮排
-                    // 更好的做法：顯示 Folder > Student
-                    // V4.2 簡化：下拉選單只顯示可選的學生，用縮排表示層級
-                    const subOptions = buildProfileOptions(p.id, depth + 1);
-                    options = options.concat(subOptions);
-                } else {
-                    const indent = "&nbsp;&nbsp;".repeat(depth);
-                    const folderIcon = depth > 0 ? "└ " : "";
-                    options.push({
-                        value: p.id,
-                        text: `${indent}${folderIcon}${p.name}`
-                    });
-                }
-            });
-            return options;
-        }
-
-        // 構建用於「選擇父目錄」的選項
         function buildFolderOptions(parentId, depth, excludeId = null) {
             const children = profiles.filter(p => p.parentId === parentId && p.isFolder && p.id !== excludeId);
             let html = '';
@@ -736,18 +793,11 @@ body.hide-text-mode .word-tag i {
         function updateProfileSelectUI() {
             const select = document.getElementById('profileSelect');
             select.innerHTML = '';
-            
-            // 遞歸渲染所有學生 (扁平化顯示樹)
-            // 為了讓下拉選單好用，我們遍歷樹
-            
             function renderTreeOptions(pid, depth) {
                 const items = profiles.filter(p => p.parentId === pid);
-                // 先排資料夾，再排學生
                 items.sort((a,b) => (a.isFolder === b.isFolder) ? 0 : a.isFolder ? -1 : 1);
-
                 items.forEach(item => {
                     if(item.isFolder) {
-                        // 資料夾本身不能選為當前用戶，做成 disabled option 當標題
                         const opt = document.createElement('option');
                         opt.disabled = true;
                         opt.innerHTML = "&nbsp;&nbsp;".repeat(depth) + "📁 " + item.name;
@@ -765,7 +815,6 @@ body.hide-text-mode .word-tag i {
             renderTreeOptions(null, 0);
         }
 
-        // --- 學生管理系統 (樹狀結構) ---
         function openProfileManager() {
             renderProfileManagerList();
             document.getElementById('profileManagerModal').style.display = 'flex';
@@ -774,57 +823,40 @@ body.hide-text-mode .word-tag i {
         function renderProfileManagerList() {
             const container = document.getElementById('profileListContainer');
             container.innerHTML = '';
-            
             function renderNode(pid, depth) {
                 const items = profiles.filter(p => p.parentId === pid);
-                // 排序：資料夾優先
                 items.sort((a,b) => (a.isFolder === b.isFolder) ? 0 : a.isFolder ? -1 : 1);
-
                 items.forEach(p => {
                     const row = document.createElement('div');
                     row.className = 'profile-row';
                     if(p.isFolder) row.classList.add('is-folder');
                     if(p.id === currentProfileId) row.classList.add('active-profile');
-
-                    // 縮排
                     for(let i=0; i<depth; i++) {
                         const indent = document.createElement('span');
                         indent.className = 'tree-indent';
                         row.appendChild(indent);
                     }
-
-                    // Icon
                     const icon = document.createElement('span');
                     icon.style.marginRight = '5px';
                     icon.textContent = p.isFolder ? '📁' : '👤';
                     row.appendChild(icon);
-
-                    // 名字輸入框
                     const input = document.createElement('input');
                     input.className = 'profile-name-input';
                     input.value = p.name;
                     input.onchange = (e) => renameProfile(p.id, e.target.value);
                     row.appendChild(input);
-
-                    // 編輯父目錄按鈕 (取代上下移)
                     const editBtn = document.createElement('button');
                     editBtn.className = 'profile-action-btn btn-move';
-                    editBtn.innerHTML = '✏️'; // 編輯/移動
+                    editBtn.innerHTML = '✏️';
                     editBtn.onclick = () => openEditProfileModal(p.id);
                     row.appendChild(editBtn);
-
-                    // 刪除按鈕
                     const delBtn = document.createElement('button');
                     delBtn.className = 'profile-action-btn btn-del';
                     delBtn.innerHTML = '❌';
                     delBtn.onclick = () => deleteProfileSpecific(p.id);
                     row.appendChild(delBtn);
-
                     container.appendChild(row);
-
-                    if(p.isFolder) {
-                        renderNode(p.id, depth + 1);
-                    }
+                    if(p.isFolder) renderNode(p.id, depth + 1);
                 });
             }
             renderNode(null, 0);
@@ -844,28 +876,17 @@ body.hide-text-mode .word-tag i {
         function deleteProfileSpecific(id) {
             const p = profiles.find(x => x.id === id);
             if(p.isFolder) {
-                // 檢查是否有子項目
                 const hasChildren = profiles.some(child => child.parentId === id);
-                if(hasChildren) {
-                    showToast("目錄不為空，無法刪除");
-                    return;
-                }
+                if(hasChildren) { showToast("目錄不為空，無法刪除"); return; }
             } else {
-                if(profiles.filter(x => !x.isFolder).length <= 1) {
-                    showToast("最少要保留一個學生");
-                    return;
-                }
+                if(profiles.filter(x => !x.isFolder).length <= 1) { showToast("最少要保留一個學生"); return; }
             }
-
             if(!confirm(`確定要刪除「${p.name}」嗎？`)) return;
-
             const isCurrent = (p.id === currentProfileId);
             const idx = profiles.findIndex(x => x.id === id);
             profiles.splice(idx, 1);
             saveProfiles();
-            
             if(isCurrent) {
-                // 切換到第一個非資料夾的學生
                 const next = profiles.find(x => !x.isFolder);
                 if(next) switchProfile(next.id);
             } else {
@@ -879,12 +900,9 @@ body.hide-text-mode .word-tag i {
             localStorage.setItem('flashcard_profiles', JSON.stringify(profiles));
         }
 
-        // --- 新增/編輯 Modal ---
         let editingProfileId = null;
-
         function openAddProfileModal() {
-            isAddingFolder = false;
-            editingProfileId = null;
+            isAddingFolder = false; editingProfileId = null;
             document.getElementById('addModalTitle').textContent = "➕ 新增學生";
             document.getElementById('newProfileNameInput').value = '';
             updateParentFolderSelect(null);
@@ -893,8 +911,7 @@ body.hide-text-mode .word-tag i {
         }
 
         function openAddFolderModal() {
-            isAddingFolder = true;
-            editingProfileId = null;
+            isAddingFolder = true; editingProfileId = null;
             document.getElementById('addModalTitle').textContent = "📁 新增目錄";
             document.getElementById('newProfileNameInput').value = '';
             updateParentFolderSelect(null);
@@ -905,100 +922,60 @@ body.hide-text-mode .word-tag i {
         function openEditProfileModal(id) {
             const p = profiles.find(x => x.id === id);
             if(!p) return;
-            editingProfileId = id;
-            isAddingFolder = p.isFolder;
+            editingProfileId = id; isAddingFolder = p.isFolder;
             document.getElementById('addModalTitle').textContent = p.isFolder ? "✏️ 編輯目錄" : "✏️ 編輯學生";
             document.getElementById('newProfileNameInput').value = p.name;
-            updateParentFolderSelect(p.parentId, p.id); // 傳入 excludeId 防止選自己為父
+            updateParentFolderSelect(p.parentId, p.id);
             document.getElementById('addProfileModal').style.display = 'flex';
         }
 
         function updateParentFolderSelect(selectedId, excludeId = null) {
             const sel = document.getElementById('parentFolderSelect');
             sel.innerHTML = '<option value="">(根目錄)</option>' + buildFolderOptions(null, 0, excludeId);
-            if(selectedId) sel.value = selectedId;
-            else sel.value = "";
+            if(selectedId) sel.value = selectedId; else sel.value = "";
         }
 
         function confirmAddProfileOrFolder() {
             const name = document.getElementById('newProfileNameInput').value.trim();
             const parentId = document.getElementById('parentFolderSelect').value || null;
-            
             if(!name) return;
-
             if(editingProfileId) {
-                // 編輯模式
                 const p = profiles.find(x => x.id === editingProfileId);
                 if(p) {
-                    p.name = name;
-                    p.parentId = parentId;
-                    saveProfiles();
-                    updateProfileSelectUI();
-                    renderProfileManagerList();
-                    showToast("已更新");
+                    p.name = name; p.parentId = parentId;
+                    saveProfiles(); updateProfileSelectUI(); renderProfileManagerList(); showToast("已更新");
                 }
             } else {
-                // 新增模式
                 const id = (isAddingFolder ? 'folder_' : 'student_') + Date.now();
-                profiles.push({
-                    id: id,
-                    name: name,
-                    parentId: parentId,
-                    isFolder: isAddingFolder
-                });
+                profiles.push({ id: id, name: name, parentId: parentId, isFolder: isAddingFolder });
                 saveProfiles();
-                
-                if(!isAddingFolder) {
-                    switchProfile(id);
-                }
-                updateProfileSelectUI();
-                renderProfileManagerList();
-                showToast(isAddingFolder ? "已建立目錄" : "已建立學生");
+                if(!isAddingFolder) switchProfile(id);
+                updateProfileSelectUI(); renderProfileManagerList(); showToast(isAddingFolder ? "已建立目錄" : "已建立學生");
             }
             closeModal('addProfileModal');
         }
 
         async function switchProfile(newId) {
             if(newId === currentProfileId) return;
-            if(isDirty) {
-                await new Promise(resolve => {
-                    saveDataToDB();
-                    setTimeout(resolve, 500);
-                });
-            }
-            
+            if(isDirty) { await new Promise(resolve => { saveDataToDB(); setTimeout(resolve, 500); }); }
             currentProfileId = newId;
             localStorage.setItem('flashcard_current_profile', currentProfileId);
-            
             words = []; reviewWords = []; masteredWords = [];
-            currentIndex = 0;
-            currentRoundId = 1;
+            currentIndex = 0; currentRoundId = 1;
             stopEverything();
-            
             await loadDataFromDB();
-            updateProfileSelectUI();
-            renderLists();
-            updateCard();
-            
-            if(document.getElementById('profileManagerModal').style.display === 'flex') {
-                renderProfileManagerList();
-            }
+            updateProfileSelectUI(); renderLists(); updateCard();
+            if(document.getElementById('profileManagerModal').style.display === 'flex') renderProfileManagerList();
             showToast("已切換學生檔案");
         }
 
-        // --- 4. 全選功能 ---
         function toggleSelectAll(selector) {
             const checkboxes = document.querySelectorAll(`${selector} .select-checkbox`);
             if(checkboxes.length === 0) return;
-            
-            // 檢查是否已全選
             const allChecked = Array.from(checkboxes).every(cb => cb.checked);
-            
-            // 反轉狀態
             checkboxes.forEach(cb => cb.checked = !allChecked);
         }
 
-        // --- 音頻解鎖 ---
         function makeSilentWavBlob(durationMs = 120, sampleRate = 44100) {
             const numSamples = Math.floor(sampleRate * (durationMs / 1000));
             const buffer = new ArrayBuffer(44 + numSamples * 2);
@@ -1042,7 +1019,6 @@ body.hide-text-mode .word-tag i {
             document.addEventListener('keydown', handler);
         }
 
-        // --- DB 系統 ---
         function initDB() {
             return new Promise((resolve, reject) => {
                 const request = indexedDB.open(DB_NAME, DB_VERSION);
@@ -1060,7 +1036,6 @@ body.hide-text-mode .word-tag i {
             return new Promise((resolve) => {
                 const transaction = db.transaction(['data'], 'readonly');
                 const store = transaction.objectStore('data');
-                
                 let keyPrefix = currentProfileId === 'default' ? '' : (currentProfileId + '_');
                 
                 const getWords = store.get(getDBKey('words'));
@@ -1108,14 +1083,12 @@ body.hide-text-mode .word-tag i {
                     store.put({ id: getDBKey('review'), value: reviewWords });
                     store.put({ id: getDBKey('mastered'), value: masteredWords });
                     store.put({ id: getDBKey('settings'), value: settings });
-                    
                     if (currentProfileId === 'default') {
                         store.put({ id: 'words', value: words });
                         store.put({ id: 'review', value: reviewWords });
                         store.put({ id: 'mastered', value: masteredWords });
                         store.put({ id: 'settings', value: settings });
                     }
-
                     transaction.oncomplete = () => { updateSaveStatus('saved'); isDirty = false; };
                     transaction.onerror = () => updateSaveStatus('error');
                 } catch (e) { updateSaveStatus('error'); }
@@ -1135,11 +1108,9 @@ body.hide-text-mode .word-tag i {
 
         function markDirty() { isDirty = true; updateSaveStatus('saving'); saveDataToDB(); }
 
-        // --- 初始化 ---
         async function init() {
             initGestureUnlock();
             updateProfileSelectUI(); 
-            
             try {
                 await initDB();
                 await loadDataFromDB();
@@ -1149,14 +1120,19 @@ body.hide-text-mode .word-tag i {
                 words = initialWords.map(w => ({ text: w, views: 0, hits: 0, audioBlob: null, roundId: 0 }));
                 updateSaveStatus('error');
             }
-
             renderLists();
             updateCard();
-
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.onvoiceschanged = loadVoices;
                 loadVoices();
             }
+            
+            const readImmToggle = document.getElementById('readImmediatelyToggle');
+            readImmToggle.checked = settings.readImmediately;
+            readImmToggle.addEventListener('change', (e) => {
+                settings.readImmediately = e.target.checked;
+                autoSaveSettings();
+            });
 
             document.getElementById('autoPlayNext').addEventListener('change', async (e) => {
                 stopEverything();
@@ -1167,24 +1143,20 @@ body.hide-text-mode .word-tag i {
                     startSequence();
                 }
             });
-
             document.getElementById('randomOrder').addEventListener('change', () => {
                 currentRoundId++; words.forEach(w => w.roundId = 0);
                 if (document.getElementById('randomOrder').checked && words.length > 0) currentIndex = pickNextIndexRandom(true);
                 updateCard();
             });
-
             document.getElementById('hideTextMode').addEventListener('change', (e) => {
                 if(e.target.checked) document.body.classList.add('hide-text-mode');
                 else document.body.classList.remove('hide-text-mode');
             });
-
             const recBtn = document.getElementById('recordBtn');
             const handleRecStart = (e) => { e.preventDefault(); startRecording(); };
             const handleRecStop = (e) => { e.preventDefault(); stopRecording(); };
             recBtn.addEventListener('mousedown', handleRecStart); recBtn.addEventListener('mouseup', handleRecStop);
             recBtn.addEventListener('touchstart', handleRecStart); recBtn.addEventListener('touchend', handleRecStop);
-            
             window.onbeforeunload = function () { if (isDirty) return "您有未儲存的變更"; };
         }
 
@@ -1196,6 +1168,7 @@ body.hide-text-mode .word-tag i {
         }
 
         function isEnglish(text) { return /^[A-Za-z0-9\s\.,\?!'"]+$/.test(text); }
+        function getLength(text) { return isEnglish(text) ? 'en' : text.length; }
 
         function pickNextIndexRandom(allowSameAsCurrent = false) {
             if (words.length === 0) return 0;
@@ -1222,22 +1195,44 @@ body.hide-text-mode .word-tag i {
             if (words.length === 0) return;
             if (document.getElementById('randomOrder').checked) currentIndex = pickNextIndexRandom(false);
             else currentIndex = (currentIndex + 1) % words.length;
-            updateCard(); startAutoIfEnabled();
+            updateCard();
+            startSequence(); 
+        }
+
+        function playCardAudioWithStrategy() {
+            stopEverything();
+            if (settings.readImmediately) {
+                speakWordFlow();
+            } else {
+                runCountdown(settings.autoDelay, "試下自己讀", () => setTimeout(() => speakWordFlow(), 0));
+            }
         }
 
         async function manualNext() {
             if (words.length === 0) return;
-            await unlockAudioAndSpeech(); stopEverything();
+            await unlockAudioAndSpeech();
             if (document.getElementById('randomOrder').checked) currentIndex = pickNextIndexRandom(false);
             else currentIndex = (currentIndex + 1) % words.length;
-            updateCard(); speakWordFlow();
+            updateCard();
+            playCardAudioWithStrategy();
         }
 
         async function manualPrev() {
             if (words.length === 0) return;
-            await unlockAudioAndSpeech(); stopEverything();
+            await unlockAudioAndSpeech();
             currentIndex = (currentIndex - 1 + words.length) % words.length;
-            updateCard(); speakWordFlow();
+            updateCard();
+            playCardAudioWithStrategy();
+        }
+
+        function startSequence() {
+            stopEverything(); 
+            if (words.length === 0) return;
+            if (settings.readImmediately) {
+                speakWordFlow();
+            } else {
+                runCountdown(settings.autoDelay, "試下自己讀", () => setTimeout(() => speakWordFlow(), 0));
+            }
         }
 
         function startRecording() {
@@ -1288,16 +1283,13 @@ body.hide-text-mode .word-tag i {
             await unlockAudioAndSpeech();
             if (state.status === 'paused') resumeFlow();
             else if (state.status === 'countdown' || state.status === 'speaking') pauseFlow();
-            else { if (document.getElementById('autoPlayNext').checked) startSequence(); else speakWordFlow(); }
+            else { 
+                speakWordFlow(); 
+            }
         }
 
         function pauseFlow() { stopEverything(); state.status = 'paused'; updateStatusUI(); }
         function resumeFlow() { if (state.countdownCallback) runCountdown(state.countdownRemaining, state.countdownLabel, state.countdownCallback); else speakWordFlow(); }
-
-        function startSequence() {
-            stopEverything(); if (words.length === 0) return;
-            runCountdown(settings.autoDelay, "試下自己讀", () => setTimeout(() => speakWordFlow(), 0));
-        }
 
         function runCountdown(seconds, text, callback) {
             state.status = 'countdown'; state.countdownRemaining = seconds; state.countdownLabel = text; state.countdownCallback = callback;
@@ -1314,23 +1306,26 @@ body.hide-text-mode .word-tag i {
             state.status = 'speaking'; updateStatusUI();
             if (state.repeatCount === 0) { words[currentIndex].views++; markDirty(); renderLists(); updateCard(); }
             const item = words[currentIndex];
-            window.speechSynthesis.cancel(); globalAudioPlayer.pause(); globalAudioPlayer.currentTime = 0;
-            clearTimeout(state.watchdogId);
-            state.watchdogId = setTimeout(() => handleSpeakEnd(), 10000);
+            playItemAudio(item, () => handleSpeakEnd());
+        }
 
+        function playItemAudio(item, onEndCallback) {
+            window.speechSynthesis.cancel(); globalAudioPlayer.pause(); globalAudioPlayer.currentTime = 0;
             if (item.audioBlob) {
                 const url = URL.createObjectURL(item.audioBlob);
                 globalAudioPlayer.src = url; globalAudioPlayer.volume = 1.0;
-                globalAudioPlayer.onended = () => { handleSpeakEnd(); URL.revokeObjectURL(url); };
-                globalAudioPlayer.play().catch(() => { if (state.repeatCount === 0) speakTTS(item.text); else handleSpeakEnd(); });
-            } else speakTTS(item.text);
+                globalAudioPlayer.onended = () => { if(onEndCallback) onEndCallback(); URL.revokeObjectURL(url); };
+                globalAudioPlayer.play().catch(() => { speakTTS(item.text, onEndCallback); });
+            } else {
+                speakTTS(item.text, onEndCallback);
+            }
         }
 
-        function speakTTS(text) {
+        function speakTTS(text, onEndCallback) {
             const u = new SpeechSynthesisUtterance(text);
             if (isEnglish(text)) { u.lang = 'en-IE'; if (englishVoice) u.voice = englishVoice; u.rate = 0.9; }
             else { u.lang = 'zh-HK'; if (cantoneseVoice) u.voice = cantoneseVoice; u.rate = 0.8; }
-            u.onend = u.onerror = () => handleSpeakEnd();
+            u.onend = u.onerror = () => { if(onEndCallback) onEndCallback(); };
             window.speechSynthesis.speak(u);
         }
 
@@ -1372,19 +1367,16 @@ body.hide-text-mode .word-tag i {
             document.getElementById('reviewCount').textContent = `(${reviewWords.length})`;
             document.getElementById('masteredCount').textContent = `(${masteredWords.length})`;
             wordList.innerHTML = ''; reviewList.innerHTML = ''; mList.innerHTML = '';
-
             words.forEach((item, index) => {
                 const tag = createTag(item, index, 'word');
                 if (index === currentIndex && !isWordSelectMode) tag.classList.add('active');
                 wordList.appendChild(tag);
             });
-
             if (!isWordSelectMode) {
                 const addBtn = document.createElement('div'); addBtn.className = 'word-tag add-tag'; addBtn.innerHTML = '<span>+</span>';
                 addBtn.onclick = () => convertToAddInput(addBtn);
                 wordList.appendChild(addBtn);
             }
-
             reviewWords.forEach((item, index) => reviewList.appendChild(createTag(item, index, 'review')));
             masteredWords.forEach((item, index) => mList.appendChild(createTag(item, index, 'mastered')));
         }
@@ -1395,7 +1387,6 @@ body.hide-text-mode .word-tag i {
             const bg = document.createElement('div'); bg.className = 'word-tag-bg'; bg.style.height = `${pct}%`;
             div.appendChild(bg);
             if (item.audioBlob) { const dot = document.createElement('div'); dot.className = 'has-audio-dot'; div.appendChild(dot); }
-            
             const content = document.createElement('div'); content.className = 'word-tag-content';
             const word = item.text;
             if (isEnglish(word)) div.classList.add('is-english');
@@ -1403,7 +1394,6 @@ body.hide-text-mode .word-tag i {
             if (len <= 2) div.classList.add('len-2'); else if (len === 3) div.classList.add('len-3'); else if (len === 4) div.classList.add('len-4'); else div.classList.add('len-long');
             content.innerHTML = len === 4 && !isEnglish(word) ? `<span><i>${word.substring(0,2)}</i><i>${word.substring(2,4)}</i></span>` : `<span>${word}</span>`;
             div.appendChild(content);
-            
             const viewCount = document.createElement('div'); viewCount.className = 'view-count'; viewCount.textContent = item.views;
             div.appendChild(viewCount);
             handleInteraction(div, index, item, type);
@@ -1422,10 +1412,8 @@ body.hide-text-mode .word-tag i {
             input.addEventListener('blur', save); input.addEventListener('keydown', (e) => { if (e.key === 'Enter') input.blur(); });
         }
 
-        // --- 互動與長按自動選取 ---
         function handleInteraction(div, index, item, type) {
             let isModeActive = (type === 'word' && isWordSelectMode) || (type === 'review' && isReviewMode) || (type === 'mastered' && isDeleteMode);
-            
             if (isModeActive) {
                 const checkbox = document.createElement('input');
                 checkbox.type = 'checkbox'; checkbox.className = 'select-checkbox'; checkbox.dataset.index = index;
@@ -1433,7 +1421,12 @@ body.hide-text-mode .word-tag i {
                 div.onclick = (e) => { if(e.target !== checkbox) checkbox.checked = !checkbox.checked; };
             } else {
                 if (type === 'word') {
-                    div.onclick = () => { if (state.status === 'idle' || state.status === 'paused') { currentIndex = index; updateCard(); } };
+                    div.onclick = () => { 
+                        if (state.status === 'idle' || state.status === 'paused') { 
+                            currentIndex = index; updateCard(); 
+                            playCardAudioWithStrategy();
+                        } 
+                    };
                 }
                 let pressTimer;
                 const startPress = () => { 
@@ -1449,7 +1442,6 @@ body.hide-text-mode .word-tag i {
             }
         }
 
-        // --- 模式管理 ---
         function enterWordSelectMode(initialIndex) { 
             isWordSelectMode = true; document.body.classList.add('select-mode-active'); 
             document.getElementById('wordSelectControls').style.display = 'flex'; 
@@ -1482,7 +1474,6 @@ body.hide-text-mode .word-tag i {
             if(cb) cb.checked = true;
         }
 
-        // --- 移動邏輯 ---
         function getSelectedIndices(selector) {
             return Array.from(document.querySelectorAll(`${selector} .select-checkbox:checked`))
                 .map(c => parseInt(c.dataset.index)).sort((a,b) => b-a);
@@ -1500,6 +1491,13 @@ body.hide-text-mode .word-tag i {
             if (currentIndex >= words.length) currentIndex = 0;
             showToast(`已移動 ${indices.length} 個到還要練`); markDirty(); exitWordSelectMode(); updateCard();
         }
+        function confirmBatchDeleteFromWords() {
+            const indices = getSelectedIndices('#wordList'); if (!indices.length) return;
+            if(!confirm(`確定要刪除這 ${indices.length} 個詞語嗎？`)) return;
+            indices.forEach(idx => words.splice(idx, 1));
+            if (currentIndex >= words.length) currentIndex = 0;
+            showToast(`已刪除 ${indices.length} 個詞語`); markDirty(); exitWordSelectMode(); updateCard();
+        }
 
         function confirmBatchMoveFromReviewToWords() {
             const indices = getSelectedIndices('#reviewList'); if (!indices.length) return;
@@ -1511,7 +1509,6 @@ body.hide-text-mode .word-tag i {
             indices.forEach(idx => { masteredWords.push(reviewWords[idx]); reviewWords.splice(idx, 1); });
             showToast(`已晉級 ${indices.length} 個到已學識`); markDirty(); exitReviewMode();
         }
-
         function confirmBatchDelete() {
             const indices = getSelectedIndices('#masteredList'); if (!indices.length) return;
             indices.forEach(idx => masteredWords.splice(idx, 1));
@@ -1566,6 +1563,7 @@ body.hide-text-mode .word-tag i {
         function handleMasteryClick(e) {
             if (words.length === 0) return;
             stopEverything();
+
             const item = words[currentIndex]; item.hits++;
             if (item.hits >= settings.masteryThreshold) {
                 words.splice(currentIndex, 1);
@@ -1579,16 +1577,168 @@ body.hide-text-mode .word-tag i {
                 markDirty(); renderLists();
                 if (words.length > 0) {
                     if (document.getElementById('randomOrder').checked) currentIndex = pickNextIndexRandom(true);
-                    updateCard(); startAutoIfEnabled();
+                    updateCard(); 
+                    startAutoIfEnabled();
                 } else updateCard();
             } else {
                 const rect = e.target.getBoundingClientRect();
                 triggerConfetti(rect.left + rect.width / 2, rect.top + rect.height / 2, 0.4);
-                markDirty(); renderLists(); updateCard(); manualNext();
+                markDirty(); renderLists(); updateCard(); 
+                manualNext();
             }
         }
 
-        // --- Settings & Modal ---
+        // --- Game Mode Logic (v4.6 Updated) ---
+        async function openGameMode() {
+            stopEverything();
+            await unlockAudioAndSpeech();
+            const totalCards = words.length + reviewWords.length + masteredWords.length;
+            if (totalCards === 0) { showToast("請先加入一些生字！"); return; }
+            
+            // 初始化遊戲 Session
+            isGameActive = true;
+            
+            // 優先使用「還要練」列表
+            if (reviewWords.length > 0) {
+                gameSessionQueue = [...reviewWords];
+                gameTotalReviewCount = reviewWords.length;
+            } else {
+                gameSessionQueue = [...words];
+                gameTotalReviewCount = words.length;
+            }
+            
+            updateGameScoreUI();
+            document.getElementById('gameOverlay').style.display = 'flex';
+            generateGameRound();
+        }
+
+        function updateGameScoreUI() {
+            const el = document.getElementById('gameProgressText');
+            if (reviewWords.length > 0) {
+                el.textContent = `還要練剩餘: ${gameSessionQueue.length} / ${gameTotalReviewCount}`;
+            } else {
+                el.textContent = `詞語表剩餘: ${gameSessionQueue.length} / ${gameTotalReviewCount}`;
+            }
+        }
+
+        function closeGameMode() {
+            isGameActive = false;
+            document.getElementById('gameOverlay').style.display = 'none';
+            stopEverything();
+        }
+
+        function generateGameRound() {
+            const grid = document.getElementById('gameGrid');
+            grid.innerHTML = '';
+            
+            // 1. Pick Target from Session Queue
+            if (gameSessionQueue.length === 0) {
+                // 如果隊列空了，重新填充 (無限練習模式)
+                if (reviewWords.length > 0) gameSessionQueue = [...reviewWords];
+                else gameSessionQueue = [...words];
+                if (gameSessionQueue.length === 0) gameSessionQueue = [...masteredWords]; // Fallback
+                showToast("一輪完成！再來一次！");
+            }
+            
+            const targetIndex = Math.floor(Math.random() * gameSessionQueue.length);
+            gameTarget = gameSessionQueue[targetIndex];
+            const targetLen = getLength(gameTarget.text);
+
+            // 2. Pick Distractors (8 items) - Smart Selection
+            // 優先找同字數的
+            let allAvailable = [...reviewWords, ...words, ...masteredWords].filter(w => w !== gameTarget);
+            let sameLenDistractors = allAvailable.filter(w => getLength(w.text) === targetLen);
+            
+            // Shuffle sameLenDistractors
+            for (let i = sameLenDistractors.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [sameLenDistractors[i], sameLenDistractors[j]] = [sameLenDistractors[j], sameLenDistractors[i]];
+            }
+
+            let distractors = sameLenDistractors.slice(0, 8);
+
+            // 如果不夠8個，從隱藏詞庫補
+            if (distractors.length < 8 && !isEnglish(gameTarget.text)) {
+                let needed = 8 - distractors.length;
+                let fallbackPool = (FALLBACK_DB[targetLen] || []).filter(w => w !== gameTarget.text);
+                
+                // Shuffle fallback
+                for (let i = fallbackPool.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [fallbackPool[i], fallbackPool[j]] = [fallbackPool[j], fallbackPool[i]];
+                }
+                
+                for(let i=0; i<needed; i++) {
+                    if (i < fallbackPool.length) {
+                        distractors.push({ text: fallbackPool[i], isFallback: true });
+                    }
+                }
+            }
+
+            // 如果還是不夠 (例如英文或超長字)，隨機補
+            if (distractors.length < 8) {
+                let needed = 8 - distractors.length;
+                let randomPool = allAvailable.filter(w => !distractors.includes(w));
+                for(let i=0; i<needed; i++) {
+                    if (i < randomPool.length) distractors.push(randomPool[i]);
+                }
+            }
+
+            // 3. Combine and Shuffle (Total 9)
+            gameItems = [gameTarget, ...distractors];
+            for (let i = gameItems.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [gameItems[i], gameItems[j]] = [gameItems[j], gameItems[i]];
+            }
+
+            // 4. Render Grid
+            gameItems.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'game-card';
+                if (isEnglish(item.text)) card.classList.add('is-english');
+                card.textContent = item.text;
+                card.onclick = () => handleGameCardClick(card, item);
+                grid.appendChild(card);
+            });
+
+            // 5. Play Audio
+            setTimeout(() => playGameAudio(), 500);
+        }
+
+        function playGameAudio() {
+            if (!isGameActive || !gameTarget) return;
+            playItemAudio(gameTarget);
+        }
+
+        function handleGameCardClick(cardElement, item) {
+            if (cardElement.classList.contains('correct')) return; 
+
+            if (item === gameTarget) {
+                // Correct!
+                cardElement.classList.add('correct');
+                triggerConfetti(null, null, 0.6);
+                
+                // 從本次 Session 隊列中移除 (讓計數器減少)
+                const idx = gameSessionQueue.indexOf(gameTarget);
+                if (idx > -1) gameSessionQueue.splice(idx, 1);
+                updateGameScoreUI();
+
+                // 這裡不移動原本列表的分類 (純練習)
+                showToast("答啱咗！");
+
+                // Next round after delay
+                setTimeout(() => {
+                    if (isGameActive) generateGameRound();
+                }, 1500);
+
+            } else {
+                // Wrong!
+                cardElement.classList.add('shake');
+                setTimeout(() => cardElement.classList.remove('shake'), 500);
+                playItemAudio(item);
+            }
+        }
+
         function openSettingsModal() {
             document.getElementById('settingAutoDelay').value = settings.autoDelay;
             document.getElementById('settingRepeatDelay').value = settings.repeatDelay;
@@ -1602,6 +1752,7 @@ body.hide-text-mode .word-tag i {
             settings.repeatDelay = parseInt(document.getElementById('settingRepeatDelay').value) || 3;
             settings.masteryThreshold = parseInt(document.getElementById('settingMasteryThreshold').value) || 2;
             settings.masteryViewLimit = parseInt(document.getElementById('settingMasteryViewLimit').value) || 1;
+            settings.readImmediately = document.getElementById('readImmediatelyToggle').checked;
             markDirty(); updateCard(); showToast("設定已更新");
         }
 
@@ -1614,6 +1765,7 @@ body.hide-text-mode .word-tag i {
             if (actionType === 'resetStats') { msgEl.textContent = "確定要將所有詞語的聽讀次數和熟練度歸零嗎？"; btnEl.className = "modal-btn btn-save"; btnEl.style.background = "#5c6bc0"; }
             else if (actionType === 'resetSettings') { msgEl.textContent = "確定要還原設定到初始值嗎？"; btnEl.className = "modal-btn btn-save"; btnEl.style.background = "#78909c"; }
             else if (actionType === 'clearAudio') { msgEl.textContent = "確定要清除所有自製錄音嗎？文字會保留。"; btnEl.className = "modal-btn btn-save"; btnEl.style.background = "#ff9800"; }
+            else if (actionType === 'clearAll') { msgEl.textContent = "⚠️ 警告：這將刪除所有詞語、錄音和進度，無法還原！"; btnEl.className = "modal-btn btn-danger"; btnEl.style.background = "#ef5350"; }
         }
 
         document.getElementById('confirmBtn').onclick = async () => {
@@ -1622,11 +1774,22 @@ body.hide-text-mode .word-tag i {
                 [words, reviewWords, masteredWords].forEach(list => list.forEach(w => { w.views = 0; w.hits = 0; }));
                 markDirty(); renderLists(); updateCard(); showToast("統計已重置");
             } else if (pendingAction === 'resetSettings') {
-                settings = { autoDelay: 4, repeatDelay: 3, masteryThreshold: 2, masteryViewLimit: 1 };
+                settings = { autoDelay: 4, repeatDelay: 3, masteryThreshold: 2, masteryViewLimit: 1, readImmediately: false };
                 openSettingsModal(); markDirty(); showToast("設定已還原");
             } else if (pendingAction === 'clearAudio') {
                 let count = 0; [words, reviewWords, masteredWords].forEach(list => list.forEach(w => { if(w.audioBlob) { w.audioBlob = null; count++; } }));
                 markDirty(); renderLists(); updateCard(); showToast(`已清除 ${count} 個錄音`);
+            } else if (pendingAction === 'clearAll') {
+                words = []; reviewWords = []; masteredWords = [];
+                settings = { autoDelay: 4, repeatDelay: 3, masteryThreshold: 2, masteryViewLimit: 1, readImmediately: false };
+                localStorage.clear(); 
+                if(db) {
+                    const transaction = db.transaction(['data'], 'readwrite');
+                    const store = transaction.objectStore('data');
+                    store.clear();
+                }
+                setTimeout(() => { window.location.reload(); }, 1000);
+                showToast("已清空所有資料，正在重啟...");
             }
             closeModal('confirmModal'); pendingAction = null;
         };
