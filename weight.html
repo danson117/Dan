@@ -5,103 +5,73 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>信唯 & 啟淳 成長記錄</title>
     
-    <!-- 1. 核心庫 -->
+    <!-- 核心 React 庫 -->
     <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- 2. 圖表庫依賴 -->
-    <script src="https://unpkg.com/prop-types/prop-types.min.js"></script>
-    <!-- 3. 圖表庫 -->
-    <script src="https://unpkg.com/recharts@2.12.0/umd/Recharts.min.js"></script>
-    
-    <!-- 4. 動畫庫 -->
     <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
 
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f3f4f6; }
         .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         .no-select { -webkit-user-select: none; user-select: none; }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        /* 隱藏滾動條但保留功能 */
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        /* 點擊效果優化 */
+        .active-scale:active { transform: scale(0.95); }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useMemo, useRef } = React;
+        const { useState, useEffect, useMemo } = React;
         const { motion, AnimatePresence } = window.Motion;
         
-        // --- 安全獲取 Recharts 組件 ---
-        const RechartsLib = window.Recharts || {};
-        const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } = RechartsLib;
-
-        // --- 版本控制 ---
-        const APP_VERSION = "1.3";
-        const VERSION_NOTES = "修復：沙盒環境下 LocalStorage 權限錯誤 (自動切換至暫存模式)";
-
-        // --- 常量與預設數據 ---
-        const KG_TO_LBS = 2.20462262;
-        const STORAGE_KEY = 'growth_records_v1';
-        
-        const PRELOAD_DATA = [
-            // 信唯 (Brother)
-            { id: 'sw_1', date: '2026-01-09', person: 'shunwai', weight: 22.85, height: null },
-            { id: 'sw_2', date: '2026-01-10', person: 'shunwai', weight: 22.95, height: null },
-            { id: 'sw_3', date: '2026-01-11', person: 'shunwai', weight: 23.10, height: null },
-            // 啟淳 (Younger)
-            { id: 'ks_1', date: '2026-01-09', person: 'kaishun', weight: 20.45, height: null },
-            { id: 'ks_2', date: '2026-01-10', person: 'kaishun', weight: 20.35, height: null },
-            { id: 'ks_3', date: '2026-01-11', person: 'kaishun', weight: 20.70, height: null },
-        ];
-
-        // --- 安全儲存函數 (修復 SecurityError) ---
-        const safeLocalStorage = {
+        // --- 安全儲存機制 ---
+        const safeStorage = {
             getItem: (key) => {
-                try {
-                    return localStorage.getItem(key);
-                } catch (e) {
-                    console.warn('LocalStorage access denied (read). Using default data.');
-                    return null;
-                }
+                try { return localStorage.getItem(key); } 
+                catch (e) { return null; }
             },
             setItem: (key, value) => {
-                try {
-                    localStorage.setItem(key, value);
-                } catch (e) {
-                    console.warn('LocalStorage access denied (write). Data will not persist.');
-                }
+                try { localStorage.setItem(key, value); } 
+                catch (e) {}
             }
         };
 
-        // --- 圖標組件 ---
+        const KG_TO_LBS = 2.20462262;
+        const STORAGE_KEY = 'growth_records_v5_refined'; 
+        
+        // 預設數據 (修正點 4: 更新 1月9日 身高數據)
+        const PRELOAD_DATA = [
+            { id: 'sw_1', date: '2026-01-09', person: 'shunwai', weight: 22.85, height: 130 },
+            { id: 'sw_2', date: '2026-01-10', person: 'shunwai', weight: 22.95, height: null },
+            { id: 'sw_3', date: '2026-01-11', person: 'shunwai', weight: 23.10, height: 110.5 },
+            { id: 'ks_1', date: '2026-01-09', person: 'kaishun', weight: 20.45, height: 120.5 },
+            { id: 'ks_2', date: '2026-01-10', person: 'kaishun', weight: 20.35, height: null },
+            { id: 'ks_3', date: '2026-01-11', person: 'kaishun', weight: 20.70, height: 102.5 },
+        ];
+
+        // --- 圖標 ---
         const Icons = {
-            Trash2: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>,
-            Edit2: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>,
-            Weight: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="5" r="3"/><path d="M6.5 8a2 2 0 0 0-1.905 1.457L2.1 18.5A2 2 0 0 0 4 21h16a2 2 0 0 0 1.9-2.5l-2.495-9.043A2 2 0 0 0 17.5 8h-11z"/></svg>,
-            Award: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>,
-            Calendar: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>,
-            Delete: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 5H9l-7 7 7 7h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Z"/><line x1="18" x2="12" y1="9" y2="15"/><line x1="12" x2="18" y1="9" y2="15"/></svg>,
-            Check: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
-            X: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg>,
-            TrendingUp: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>,
-            List: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>,
             Star: (p) => <svg {...p} viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>,
-            Alert: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+            X: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg>,
+            List: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>,
+            Delete: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 5H9l-7 7 7 7h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Z"/><line x1="18" x2="12" y1="9" y2="15"/><line x1="12" x2="18" y1="9" y2="15"/></svg>,
+            Weight: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="5" r="3"/><path d="M6.5 8a2 2 0 0 0-1.905 1.457L2.1 18.5A2 2 0 0 0 4 21h16a2 2 0 0 0 1.9-2.5l-2.495-9.043A2 2 0 0 0 17.5 8h-11z"/></svg>,
+            Calendar: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>,
+            Check: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>,
+            Edit: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>,
+            Trash: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
         };
 
-        // --- 輔助函數 ---
         const getTodayStr = () => new Date().toISOString().split('T')[0];
-        const formatDate = (dateStr) => {
-            if (!dateStr) return '';
-            const d = new Date(dateStr);
-            return `${d.getMonth() + 1}/${d.getDate()}`;
-        };
         const kgToLbs = (kg) => kg * KG_TO_LBS;
 
-        // --- 核心邏輯：計算貼紙與最高紀錄 ---
+        // --- 數據處理邏輯 ---
         const recalculateRecords = (rawRecords) => {
             const sorted = [...rawRecords].sort((a, b) => new Date(a.date) - new Date(b.date));
             const personStats = { shunwai: { maxLbs: 0 }, kaishun: { maxLbs: 0 } };
@@ -117,8 +87,6 @@
                         const diff = lbs - currentMax;
                         stickers = Math.floor(diff / 0.1);
                         if (stickers < 0) stickers = 0;
-                    } else {
-                        stickers = 0;
                     }
                     personStats[record.person].maxLbs = lbs;
                     isNewRecord = true;
@@ -127,7 +95,156 @@
             }).sort((a, b) => new Date(b.date) - new Date(a.date));
         };
 
-        // --- 數字鍵盤組件 ---
+        // --- 組件：最近紀錄 ---
+        const RecentRecordsCard = ({ person, records, title, colorClass, bgClass }) => {
+            const myRecords = records.filter(r => r.person === person).slice(0, 5);
+
+            return (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+                    <div className={`${bgClass} px-3 py-2 border-b border-gray-100 flex justify-between items-center`}>
+                        <span className={`text-sm font-bold ${colorClass}`}>{title} - 最近紀錄</span>
+                    </div>
+                    <div className="divide-y divide-gray-100">
+                        {myRecords.length === 0 ? (
+                            <div className="p-4 text-center text-gray-400 text-xs">暫無數據</div>
+                        ) : (
+                            myRecords.map(r => (
+                                <div key={r.id} className="flex justify-between items-center p-3 hover:bg-gray-50 transition-colors">
+                                    <div className="flex flex-col">
+                                        <span className="text-xs text-gray-400 font-medium">{r.date}</span>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        {r.stickers > 0 && (
+                                            <span className="flex items-center gap-0.5 text-[10px] bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded-full font-bold">
+                                                <Icons.Star size={10} /> +{r.stickers}
+                                            </span>
+                                        )}
+                                        <div className="text-right flex flex-col items-end">
+                                            <div className="text-sm font-bold text-gray-800">
+                                                {r.weight} <span className="text-[10px] font-normal text-gray-400">kg</span>
+                                            </div>
+                                            {r.height && r.height > 0 && (
+                                                <div className="text-[11px] text-gray-500 font-medium">
+                                                    {r.height} <span className="text-[9px] text-gray-400">cm</span>
+                                                </div>
+                                            )}
+                                            {!r.height && (
+                                                <div className="text-[10px] text-gray-400">≈ {r.lbs} lbs</div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        // --- 組件：圖表 ---
+        const AdvancedChart = ({ records }) => {
+            const [mode, setMode] = useState('weight');
+
+            const containerHeight = 200;
+            const containerWidth = 340;
+            const paddingLeft = 35;
+            const paddingRight = 10;
+            const paddingTop = 20;
+            const paddingBottom = 20;
+
+            const validRecords = records.filter(r => mode === 'weight' ? r.weight > 0 : r.height > 0);
+            const sortedRecords = [...validRecords].sort((a, b) => new Date(a.date) - new Date(b.date));
+            const recentRecords = sortedRecords.slice(-14);
+
+            if (recentRecords.length < 2) {
+                return (
+                    <div className="flex flex-col items-center justify-center h-48 bg-white rounded-2xl border border-gray-200">
+                        <div className="flex bg-gray-100 p-1 rounded-lg mb-4">
+                            <button onClick={() => setMode('weight')} className={`px-4 py-1 text-xs font-bold rounded-md transition-all ${mode === 'weight' ? 'bg-white shadow text-blue-600' : 'text-gray-400'}`}>體重</button>
+                            <button onClick={() => setMode('height')} className={`px-4 py-1 text-xs font-bold rounded-md transition-all ${mode === 'height' ? 'bg-white shadow text-blue-600' : 'text-gray-400'}`}>高度</button>
+                        </div>
+                        <div className="text-gray-400 text-sm">數據不足，無法顯示{mode === 'weight' ? '體重' : '高度'}趨勢</div>
+                    </div>
+                );
+            }
+
+            const getValue = (r) => mode === 'weight' ? r.weight : r.height;
+            const values = recentRecords.map(getValue);
+            const minV = Math.min(...values) * 0.98;
+            const maxV = Math.max(...values) * 1.02;
+            const range = maxV - minV;
+
+            const swData = recentRecords.filter(r => r.person === 'shunwai');
+            const ksData = recentRecords.filter(r => r.person === 'kaishun');
+
+            const getX = (dateStr) => {
+                const allDates = recentRecords.map(r => r.date);
+                const uniqueDates = [...new Set(allDates)].sort();
+                const index = uniqueDates.indexOf(dateStr);
+                const step = (containerWidth - paddingLeft - paddingRight) / (uniqueDates.length - 1 || 1);
+                return paddingLeft + index * step;
+            };
+
+            const getY = (val) => {
+                return containerHeight - paddingBottom - ((val - minV) / (range || 1)) * (containerHeight - paddingTop - paddingBottom);
+            };
+
+            const makePath = (data) => {
+                if (data.length === 0) return "";
+                return data.map((d, i) => {
+                    const x = getX(d.date);
+                    const y = getY(getValue(d));
+                    return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
+                }).join(" ");
+            };
+
+            const yLabels = [0, 0.25, 0.5, 0.75, 1].map(p => {
+                const val = minV + p * range;
+                return { y: containerHeight - paddingBottom - p * (containerHeight - paddingTop - paddingBottom), val };
+            });
+
+            return (
+                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200">
+                    <div className="flex justify-between items-center mb-4">
+                        <h2 className="font-bold text-gray-700 text-sm">趨勢圖表</h2>
+                        <div className="flex bg-gray-100 p-1 rounded-lg">
+                            <button onClick={() => setMode('weight')} className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${mode === 'weight' ? 'bg-white shadow text-blue-600' : 'text-gray-400'}`}>體重</button>
+                            <button onClick={() => setMode('height')} className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${mode === 'height' ? 'bg-white shadow text-blue-600' : 'text-gray-400'}`}>高度</button>
+                        </div>
+                    </div>
+                    
+                    <div className="w-full overflow-x-auto hide-scrollbar">
+                        <svg viewBox={`0 0 ${containerWidth} ${containerHeight}`} className="w-full h-full" style={{minWidth: '320px'}}>
+                            {yLabels.map((label, i) => (
+                                <g key={i}>
+                                    <line x1={paddingLeft} y1={label.y} x2={containerWidth} y2={label.y} stroke="#f3f4f6" strokeWidth="1" />
+                                    <text x={paddingLeft - 5} y={label.y + 3} textAnchor="end" fontSize="10" fill="#9ca3af" className="font-mono">
+                                        {label.val.toFixed(1)}
+                                    </text>
+                                </g>
+                            ))}
+                            
+                            <path d={makePath(swData)} fill="none" stroke="#2563eb" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                            {swData.map((d, i) => (
+                                <circle key={`sw-${i}`} cx={getX(d.date)} cy={getY(getValue(d))} r="3" fill="#2563eb" stroke="white" strokeWidth="1" />
+                            ))}
+                            
+                            <path d={makePath(ksData)} fill="none" stroke="#16a34a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                            {ksData.map((d, i) => (
+                                <circle key={`ks-${i}`} cx={getX(d.date)} cy={getY(getValue(d))} r="3" fill="#16a34a" stroke="white" strokeWidth="1" />
+                            ))}
+                        </svg>
+                    </div>
+
+                    <div className="flex justify-center gap-4 mt-2 text-xs font-bold">
+                        <div className="flex items-center gap-1 text-blue-600"><div className="w-2 h-2 rounded-full bg-blue-600"></div> 信唯</div>
+                        <div className="flex items-center gap-1 text-green-600"><div className="w-2 h-2 rounded-full bg-green-600"></div> 啟淳</div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- 組件：數字鍵盤 (修正點 1: 佈局與大小) ---
         const CustomKeypad = ({ isOpen, onClose, onConfirm, title, initialValue, suffix }) => {
             const [value, setValue] = useState('');
 
@@ -141,28 +258,41 @@
                 else { if (value.length < 6) setValue(prev => prev + key); }
             };
 
+            // 鍵盤按鈕樣式
+            const keyBtnClass = "bg-white active:bg-gray-100 text-2xl font-medium text-gray-800 flex items-center justify-center h-16";
+
             return (
                 <AnimatePresence>
                     {isOpen && (
                         <>
                             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 0.5 }} exit={{ opacity: 0 }} onClick={onClose} className="fixed inset-0 bg-black z-40" />
                             <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 300 }} className="fixed bottom-0 left-0 right-0 bg-white z-50 rounded-t-2xl shadow-2xl overflow-hidden pb-safe">
-                                <div className="bg-gray-100 p-4 flex flex-col items-center justify-center border-b border-gray-200">
+                                <div className="bg-gray-50 p-4 flex flex-col items-center justify-center border-b border-gray-200">
                                     <span className="text-gray-500 text-sm mb-1">{title}</span>
                                     <div className="text-4xl font-bold text-gray-800 flex items-baseline">
                                         {value || '0'}
                                         <span className="text-xl text-gray-400 ml-1">{suffix}</span>
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-4 grid-rows-4 gap-px bg-gray-200 h-80 no-select">
-                                    {['7','8','9'].map(k => <button key={k} onClick={() => handlePress(k)} className="bg-white active:bg-gray-200 text-2xl font-medium text-gray-800">{k}</button>)}
-                                    <button onClick={() => handlePress('del')} className="bg-gray-100 active:bg-gray-200 text-gray-600 flex items-center justify-center"><Icons.Delete size={28} /></button>
-                                    {['4','5','6'].map(k => <button key={k} onClick={() => handlePress(k)} className="bg-white active:bg-gray-200 text-2xl font-medium text-gray-800">{k}</button>)}
-                                    <button onClick={() => { onConfirm(value); onClose(); }} className="row-span-2 bg-blue-600 active:bg-blue-700 text-white text-xl font-bold flex items-center justify-center" style={{ gridColumn: '4', gridRow: '2 / span 2' }}>確定</button>
-                                    {['1','2','3'].map(k => <button key={k} onClick={() => handlePress(k)} className="bg-white active:bg-gray-200 text-2xl font-medium text-gray-800">{k}</button>)}
-                                    <button onClick={() => handlePress('0')} className="col-span-2 bg-white active:bg-gray-200 text-2xl font-medium text-gray-800">0</button>
-                                    <button onClick={() => handlePress('.')} className="bg-white active:bg-gray-200 text-2xl font-medium text-gray-800">.</button>
-                                    <div className="bg-gray-100"></div>
+                                
+                                {/* 修正佈局：標準3列，底部獨立確定按鈕 */}
+                                <div className="bg-gray-200 grid grid-cols-3 gap-px pb-px">
+                                    {['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0'].map(key => (
+                                        <button key={key} onClick={() => handlePress(key)} className={keyBtnClass}>
+                                            {key}
+                                        </button>
+                                    ))}
+                                    {/* Backspace 與其他數字鍵一樣大 */}
+                                    <button onClick={() => handlePress('del')} className={`${keyBtnClass} bg-gray-100`}>
+                                        <Icons.Delete size={24} className="text-gray-600" />
+                                    </button>
+                                </div>
+
+                                {/* 底部全寬確定按鈕 */}
+                                <div className="p-4 bg-white border-t border-gray-100">
+                                    <button onClick={() => { onConfirm(value); onClose(); }} className="w-full bg-blue-600 active:bg-blue-700 text-white py-3 rounded-xl font-bold text-lg shadow-md flex items-center justify-center gap-2 transition-transform active:scale-95">
+                                        <Icons.Check size={24} /> 確定
+                                    </button>
                                 </div>
                             </motion.div>
                         </>
@@ -171,30 +301,83 @@
             );
         };
 
-        // --- 歷史記錄 Modal ---
+        // --- 歷史記錄 Modal (修正點 2 & 3: 按鈕位置與關閉圖標) ---
         const HistoryModal = ({ isOpen, onClose, records, onDelete, onEdit }) => {
+            const [filter, setFilter] = useState('all');
+
+            const filteredRecords = records.filter(r => {
+                if (filter === 'all') return true;
+                return r.person === filter;
+            });
+
+            const TabButton = ({ id, label, activeColor }) => (
+                <button 
+                    onClick={() => setFilter(id)}
+                    className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
+                        filter === id 
+                        ? `${activeColor} text-white shadow-md` 
+                        : 'bg-gray-100 text-gray-500'
+                    }`}
+                >
+                    {label}
+                </button>
+            );
+
             return (
                 <AnimatePresence>
                     {isOpen && (
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-white z-50 overflow-y-auto pb-safe">
-                            <div className="sticky top-0 bg-white border-b px-4 py-3 flex justify-between items-center z-10">
-                                <h2 className="text-lg font-bold">全部歷史記錄</h2>
-                                <button onClick={onClose} className="p-2 bg-gray-100 rounded-full"><Icons.X size={20}/></button>
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-white z-50 overflow-hidden flex flex-col pb-safe">
+                            <div className="bg-white border-b px-4 py-3 flex justify-between items-center z-10 shadow-sm">
+                                <h2 className="text-lg font-bold text-gray-800">全部歷史記錄</h2>
+                                {/* 修正點 3: 清晰的 X 按鈕，無背景 */}
+                                <button onClick={onClose} className="p-2 -mr-2 text-gray-800 hover:text-gray-600 transition-colors">
+                                    <Icons.X size={32} />
+                                </button>
                             </div>
-                            <div className="p-4 space-y-2">
-                                {records.map(r => (
-                                    <div key={r.id} className={`p-3 rounded-xl border flex justify-between items-center ${r.person === 'shunwai' ? 'bg-blue-50 border-blue-100' : 'bg-green-50 border-green-100'}`}>
-                                        <div>
-                                            <div className="text-xs text-gray-500 font-bold">{r.date} ({r.person === 'shunwai' ? '信唯' : '啟淳'})</div>
-                                            <div className="font-bold text-lg">{r.weight}kg <span className="text-xs text-gray-400">({r.lbs}lbs)</span></div>
+                            <div className="p-4 bg-white border-b border-gray-100">
+                                <div className="flex gap-2 bg-gray-50 p-1 rounded-xl">
+                                    <TabButton id="all" label="全部" activeColor="bg-gray-800" />
+                                    <TabButton id="shunwai" label="信唯" activeColor="bg-blue-600" />
+                                    <TabButton id="kaishun" label="啟淳" activeColor="bg-green-600" />
+                                </div>
+                            </div>
+                            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
+                                {filteredRecords.length === 0 ? (
+                                    <div className="text-center text-gray-400 mt-10">暫無記錄</div>
+                                ) : (
+                                    filteredRecords.map(r => (
+                                        <div key={r.id} className="bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between gap-2">
+                                            {/* 左側資訊 */}
+                                            <div className="flex items-center gap-3 overflow-hidden">
+                                                <div className={`w-1 h-10 rounded-full flex-shrink-0 ${r.person === 'shunwai' ? 'bg-blue-500' : 'bg-green-500'}`}></div>
+                                                <div className="flex flex-col">
+                                                    <div className="text-[10px] text-gray-400 font-bold">{r.date}</div>
+                                                    <div className="font-bold text-gray-800 text-base leading-tight truncate">
+                                                        {r.person === 'shunwai' ? '信唯' : '啟淳'} 
+                                                        <span className="ml-1.5 text-lg">{r.weight}</span> <span className="text-xs font-normal text-gray-400">kg</span>
+                                                        {r.height && <span className="ml-1.5 text-sm text-gray-500">/ {r.height} cm</span>}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            {/* 右側按鈕 (修正點 2: 同一行顯示) */}
+                                            <div className="flex items-center gap-2 flex-shrink-0">
+                                                {r.stickers > 0 && (
+                                                    <div className="hidden sm:flex items-center gap-0.5 bg-yellow-50 px-1.5 py-0.5 rounded border border-yellow-100 mr-1">
+                                                        <Icons.Star size={10} className="text-yellow-500"/>
+                                                        <span className="text-[10px] font-bold text-yellow-700">x{r.stickers}</span>
+                                                    </div>
+                                                )}
+                                                <button onClick={() => onEdit(r)} className="p-2 rounded-lg bg-blue-50 text-blue-600 active:bg-blue-100 active-scale">
+                                                    <Icons.Edit size={18} />
+                                                </button>
+                                                <button onClick={() => onDelete(r.id)} className="p-2 rounded-lg bg-red-50 text-red-600 active:bg-red-100 active-scale">
+                                                    <Icons.Trash size={18} />
+                                                </button>
+                                            </div>
                                         </div>
-                                        <div className="flex items-center gap-3">
-                                            {r.stickers > 0 && <span className="text-yellow-500 font-bold text-sm flex items-center gap-1"><Icons.Star size={14} fill="currentColor"/> x{r.stickers}</span>}
-                                            <button onClick={() => onEdit(r)} className="p-2 text-blue-500 bg-white rounded-lg border border-blue-100"><Icons.Edit2 size={16}/></button>
-                                            <button onClick={() => onDelete(r.id)} className="p-2 text-red-500 bg-white rounded-lg border border-red-100"><Icons.Trash2 size={16}/></button>
-                                        </div>
-                                    </div>
-                                ))}
+                                    ))
+                                )}
                             </div>
                         </motion.div>
                     )}
@@ -204,9 +387,8 @@
 
         // --- 主應用 ---
         function WeightTracker() {
-            // 安全初始化 state
             const [records, setRecords] = useState(() => {
-                const saved = safeLocalStorage.getItem(STORAGE_KEY);
+                const saved = safeStorage.getItem(STORAGE_KEY);
                 return saved ? JSON.parse(saved) : PRELOAD_DATA;
             });
             
@@ -214,18 +396,11 @@
             const [inputState, setInputState] = useState({ shunwai: { weight: '', height: '' }, kaishun: { weight: '', height: '' } });
             const [keypad, setKeypad] = useState({ isOpen: false, person: '', type: '', title: '' });
             const [historyModalOpen, setHistoryModalOpen] = useState(false);
-            const [storageError, setStorageError] = useState(false);
             
             const processedRecords = useMemo(() => recalculateRecords(records), [records]);
 
-            // 安全儲存 effect
             useEffect(() => {
-                try {
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
-                    setStorageError(false);
-                } catch (e) {
-                    setStorageError(true);
-                }
+                safeStorage.setItem(STORAGE_KEY, JSON.stringify(records));
             }, [records]);
 
             const getMaxLbs = (person) => {
@@ -270,19 +445,6 @@
                 setInputState(prev => ({ ...prev, [keypad.person]: { ...prev[keypad.person], [keypad.type]: val } }));
             };
 
-            const chartData = useMemo(() => {
-                const dates = [...new Set(records.map(r => r.date))].sort();
-                return dates.map(date => {
-                    const sw = records.find(r => r.date === date && r.person === 'shunwai');
-                    const ks = records.find(r => r.date === date && r.person === 'kaishun');
-                    return {
-                        date: formatDate(date),
-                        shunwai: sw ? sw.weight : null,
-                        kaishun: ks ? ks.weight : null
-                    };
-                });
-            }, [records]);
-
             const totalStickers = useMemo(() => {
                 return processedRecords.reduce((acc, curr) => {
                     acc[curr.person] += curr.stickers;
@@ -293,8 +455,8 @@
             const InputCard = ({ person, title, icon: Icon, maxLbs }) => {
                 const state = inputState[person];
                 const theme = person === 'shunwai' 
-                    ? { bg: 'bg-blue-600', text: 'text-blue-600', border: 'border-blue-500', light: 'bg-blue-50' }
-                    : { bg: 'bg-green-600', text: 'text-green-600', border: 'border-green-500', light: 'bg-green-50' };
+                    ? { bg: 'bg-blue-600', text: 'text-blue-600', border: 'border-blue-500', light: 'bg-blue-50', btnHover: 'hover:bg-blue-700' }
+                    : { bg: 'bg-green-600', text: 'text-green-600', border: 'border-green-500', light: 'bg-green-50', btnHover: 'hover:bg-green-700' };
 
                 return (
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full">
@@ -318,46 +480,21 @@
                                 <div className="text-xl font-black text-yellow-600">{maxLbs.toFixed(2)} <span className="text-sm font-normal">lbs</span></div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
-                                <button onClick={() => openKeypad(person, 'weight', `${title}體重`)} className={`relative p-2 h-20 rounded-xl border-2 flex flex-col items-center justify-center transition-all ${state.weight ? `${theme.border} ${theme.light}` : 'border-gray-100 bg-gray-50'}`}>
+                            <div className="flex gap-2 h-20">
+                                <button onClick={() => openKeypad(person, 'weight', `${title}體重`)} className={`flex-1 relative rounded-xl border-2 flex flex-col items-center justify-center transition-all ${state.weight ? `${theme.border} ${theme.light}` : 'border-gray-100 bg-gray-50'}`}>
                                     <span className="text-xs text-gray-400">體重 (kg)</span>
-                                    <span className={`text-2xl font-bold ${state.weight ? theme.text : 'text-gray-300'}`}>{state.weight || '0.0'}</span>
-                                    {state.weight && <span className="absolute bottom-1 right-2 text-[10px] text-gray-400">≈ {(state.weight * KG_TO_LBS).toFixed(1)} lbs</span>}
+                                    <span className={`text-xl font-bold ${state.weight ? theme.text : 'text-gray-300'}`}>{state.weight || '0.0'}</span>
+                                    {state.weight && <span className="absolute bottom-1 text-[9px] text-gray-400">≈ {(state.weight * KG_TO_LBS).toFixed(1)} lbs</span>}
                                 </button>
-                                <button onClick={() => openKeypad(person, 'height', `${title}高度`)} className={`p-2 h-20 rounded-xl border-2 flex flex-col items-center justify-center transition-all ${state.height ? `${theme.border} ${theme.light}` : 'border-dashed border-gray-200 bg-gray-50'}`}>
+                                
+                                <button onClick={() => openKeypad(person, 'height', `${title}高度`)} className={`flex-1 rounded-xl border-2 flex flex-col items-center justify-center transition-all ${state.height ? `${theme.border} ${theme.light}` : 'border-dashed border-gray-200 bg-gray-50'}`}>
                                     <span className="text-xs text-gray-400">高度 (cm)</span>
-                                    <span className={`text-2xl font-bold ${state.height ? theme.text : 'text-gray-300'}`}>{state.height || '-'}</span>
+                                    <span className={`text-xl font-bold ${state.height ? theme.text : 'text-gray-300'}`}>{state.height || '-'}</span>
                                 </button>
-                            </div>
 
-                            <button onClick={() => handleAddRecord(person)} className={`w-full py-3 ${theme.bg} text-white rounded-xl font-bold shadow-lg active:scale-[0.98] transition-transform flex justify-center items-center gap-2`}>
-                                <Icons.Check size={20} /> 記錄數據
-                            </button>
-                        </div>
-
-                        <div className="flex-1 bg-gray-50 p-4 border-t border-gray-100">
-                            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">最近 5 次記錄</h3>
-                            <div className="space-y-2">
-                                {processedRecords.filter(r => r.person === person).slice(0, 5).map(item => (
-                                    <div key={item.id} className={`relative p-2.5 rounded-xl border border-transparent transition-all ${item.isNewRecord ? 'bg-yellow-100 border-yellow-300 shadow-sm' : 'bg-white border-gray-100'}`}>
-                                        <div className="flex justify-between items-center">
-                                            <div>
-                                                <div className="text-[10px] text-gray-500 font-bold">{item.date}</div>
-                                                <div className="flex items-baseline gap-1">
-                                                    <span className="font-bold text-gray-800">{item.weight} <span className="text-[10px] font-normal text-gray-400">kg</span></span>
-                                                    <span className="text-xs text-gray-400">/ {item.lbs} lbs</span>
-                                                </div>
-                                            </div>
-                                            {item.stickers > 0 && (
-                                                <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-full shadow-sm border border-yellow-100">
-                                                    <Icons.Star size={12} className="text-yellow-500" fill="currentColor"/>
-                                                    <span className="text-xs font-bold text-yellow-600">x{item.stickers}</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                        {item.isNewRecord && <div className="absolute -top-1.5 -right-1 bg-red-500 text-white text-[9px] px-1.5 rounded-full font-bold shadow-sm">New High!</div>}
-                                    </div>
-                                ))}
+                                <button onClick={() => handleAddRecord(person)} className={`w-16 ${theme.bg} ${theme.btnHover} text-white rounded-xl shadow-md active:scale-95 transition-all flex items-center justify-center font-bold tracking-widest text-sm writing-vertical`}>
+                                    記錄
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -366,72 +503,50 @@
 
             return (
                 <div className="min-h-screen pb-16 relative">
-                    {storageError && (
-                        <div className="bg-orange-100 text-orange-800 px-4 py-2 text-xs font-bold text-center border-b border-orange-200 flex items-center justify-center gap-2">
-                            <Icons.Alert size={14}/>
-                            瀏覽器限制：數據無法儲存，重新整理後將遺失。
-                        </div>
-                    )}
-                    
                     <header className="bg-white sticky top-0 z-30 px-4 py-3 shadow-sm flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                            <div className="bg-gradient-to-br from-yellow-400 to-orange-500 p-1.5 rounded-lg text-white shadow-md">
-                                <Icons.Award size={20} />
-                            </div>
-                            <h1 className="text-lg font-bold text-gray-800">兄弟成長記錄</h1>
-                        </div>
+                        <h1 className="text-lg font-bold text-gray-800">兄弟成長記錄</h1>
                         <button onClick={() => setHistoryModalOpen(true)} className="flex items-center gap-1 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-full text-xs font-bold text-gray-600 transition-colors">
                             <Icons.List size={16}/> 歷史記錄
                         </button>
                     </header>
 
                     <main className="max-w-4xl mx-auto p-4 space-y-6">
+                        {/* 日期選擇 */}
                         <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-200 flex items-center gap-3">
                             <div className="bg-gray-100 p-2 rounded-lg text-gray-500"><Icons.Calendar size={20}/></div>
                             <div className="flex-1">
-                                <label className="text-xs font-bold text-gray-400 block">記錄日期 (同步)</label>
+                                <label className="text-xs font-bold text-gray-400 block">記錄日期</label>
                                 <input type="date" value={sharedDate} onChange={(e) => setSharedDate(e.target.value)} className="w-full font-bold text-gray-800 bg-transparent outline-none"/>
                             </div>
                         </div>
 
+                        {/* 輸入卡片 */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <InputCard person="shunwai" title="信唯" icon={Icons.Weight} maxLbs={getMaxLbs('shunwai')} />
                             <InputCard person="kaishun" title="啟淳" icon={Icons.Weight} maxLbs={getMaxLbs('kaishun')} />
                         </div>
 
-                        <section className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200">
-                            <div className="flex items-center gap-2 mb-4">
-                                <Icons.TrendingUp className="text-purple-500" size={20}/>
-                                <h2 className="font-bold text-gray-700">體重趨勢 (KG)</h2>
-                            </div>
-                            <div className="h-64 w-full">
-                                {window.Recharts ? (
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <LineChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
-                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                                            <XAxis dataKey="date" tick={{fontSize: 10}} tickLine={false} axisLine={false} dy={10} />
-                                            <YAxis domain={['auto', 'auto']} tick={{fontSize: 10}} tickLine={false} axisLine={false} />
-                                            <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }} />
-                                            <Legend wrapperStyle={{ paddingTop: '20px' }}/>
-                                            <Line type="monotone" dataKey="shunwai" name="信唯" stroke="#2563eb" strokeWidth={3} dot={{r:3, fill:'#2563eb', strokeWidth:0}} activeDot={{r:6}} connectNulls />
-                                            <Line type="monotone" dataKey="kaishun" name="啟淳" stroke="#16a34a" strokeWidth={3} dot={{r:3, fill:'#16a34a', strokeWidth:0}} activeDot={{r:6}} connectNulls />
-                                        </LineChart>
-                                    </ResponsiveContainer>
-                                ) : (
-                                    <div className="flex items-center justify-center h-full text-gray-400 bg-gray-50 rounded-lg">
-                                        圖表加載失敗，請檢查網絡 (Recharts)
-                                    </div>
-                                )}
-                            </div>
-                        </section>
-                    </main>
-
-                    <div className="fixed bottom-2 right-2 text-[10px] text-gray-300 pointer-events-none select-none z-0 text-right">
-                        <div>v{APP_VERSION}</div>
-                        <div className="opacity-0 hover:opacity-100 transition-opacity bg-black/80 text-white p-2 rounded absolute bottom-full right-0 w-48 pointer-events-auto mb-1">
-                            {VERSION_NOTES}
+                        {/* 最近紀錄列表 */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <RecentRecordsCard 
+                                person="shunwai" 
+                                title="信唯" 
+                                records={processedRecords} 
+                                colorClass="text-blue-600" 
+                                bgClass="bg-blue-50" 
+                            />
+                            <RecentRecordsCard 
+                                person="kaishun" 
+                                title="啟淳" 
+                                records={processedRecords} 
+                                colorClass="text-green-600" 
+                                bgClass="bg-green-50" 
+                            />
                         </div>
-                    </div>
+
+                        {/* 圖表區塊 */}
+                        <AdvancedChart records={processedRecords} />
+                    </main>
 
                     <CustomKeypad {...keypad} onClose={() => setKeypad(p => ({...p, isOpen: false}))} onConfirm={onKeypadConfirm} suffix={keypad.type === 'weight' ? 'kg' : 'cm'} />
                     <HistoryModal isOpen={historyModalOpen} onClose={() => setHistoryModalOpen(false)} records={processedRecords} onDelete={handleDelete} onEdit={handleEdit} />
